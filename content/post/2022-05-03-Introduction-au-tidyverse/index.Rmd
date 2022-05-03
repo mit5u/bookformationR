@@ -1,7 +1,7 @@
 ---
 title: "Introduction au tidyverse"
 author: "Jocelyn Béziau"
-date: "`r format(Sys.Date(),'%d %B %Y')`"
+date: 2022-05-03
 categories: ["R", "tidyverse"]
 tags: ["R", "tidyverse", "formation", "intro"]
 ---
@@ -28,7 +28,7 @@ Principes de [tidyr](https://tidyr.tidyverse.org/)
 
 * colonne = variable
 * ligne = observation
-* cellule = valeur unique)
+* cellule = valeur unique
 
 ## Fonctions de tidyr
 * [Transposition](https://tidyr.tidyverse.org/articles/pivot.html) (`pivot_longer`, `pivot_wider`)
