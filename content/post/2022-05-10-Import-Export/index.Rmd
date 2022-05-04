@@ -5,7 +5,6 @@ date: 2022-05-10
 categories: ["R", "tidyverse", "formation"]
 tags: ["R", "intro"]
 ---
-
 ```{r init, message = FALSE, echo = FALSE, warning = FALSE}
 
 library(tidyverse)
@@ -14,7 +13,7 @@ library(rio)
 library(palmerpenguins)
 
 knitr::knit_hooks$set(optipng = knitr::hook_optipng)
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, cache = TRUE)
 
 set.seed(42)
 options(width = 100, 
