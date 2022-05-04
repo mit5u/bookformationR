@@ -8,3 +8,184 @@ tags: ["R", "intro"]
 
 
 
+<div id="modifier-un-objet-de-r-récupérer-le-dernier-résultat" class="section level2">
+<h2>Modifier un objet de R, récupérer le dernier résultat</h2>
+<p><span style="color: red">En règle quasi générale, <strong>il est impossible de modifier un objet de R</strong>.</span></p>
+<p>Fonctionnellement, si on veut faire une modification à une table associée à un symbole <code>&lt;symbole&gt;</code> donné :</p>
+<ul>
+<li>on construit une copie modifiée de la table</li>
+<li>on associe la copie modifiée au symbole <code>&lt;symbole&gt;</code></li>
+<li>la précédente table associée au symbole <code>&lt;symbole&gt;</code> est alors perdue parce que plus référençable (sauf si on l’avait associée à un deuxième symbole).</li>
+</ul>
+<p>En pratique, c’est R qui se charge de minimiser le nombre de réelles copies et de supprimer de la mémoire les objets “perdus” (non référençables).</p>
+<p>Par exemple, pour trier selon la proportion d’agriculteurs, on utilisera la fonction <code>arrange()</code> :</p>
+<pre class="r"><code>swiss %&gt;% arrange(part_agriculteurs)</code></pre>
+<p>A la sortie il y a le résultat, une table triée, qui est juste affiché mais aussi la table originale, non triée, qui est toujours associée au symbole <em>swiss</em>. Sur le moment, et en interactif seulement, on peut récupérer son oubli en utilisant la variable spéciale <code>.Last.value</code> qui contient le dernier résultat d’évaluation, donc la table triée :</p>
+<pre class="r"><code>swiss &lt;- .Last.value</code></pre>
+<p>Mais le mieux est bien sûr de le faire en une seule fois, selon l’une des syntaxes :</p>
+<pre class="r"><code>swiss &lt;- swiss %&gt;% arrange(part_agriculteurs)
+swiss %&gt;% arrange(part_agriculteurs) -&gt; swiss</code></pre>
+</div>
+<div id="ajouter-modifier-une-colonne-mutate" class="section level2">
+<h2>Ajouter, modifier une colonne : <code>mutate()</code></h2>
+<p>L’indicateur de naissance était en format texte. Pour faire des calculs, il nous faut le convertir en numérique dans une nouvelle colonne. La fonction <code>mutate</code> permet de créer une nouvelle colonne à partir d’une formule de calcul arbitrairement compliquée pouvant mobiliser les autres colonnes de la table.</p>
+<pre class="r"><code>swiss %&gt;% as_tibble() -&gt; swiss # Changement de type pour un affichage enrichi
+swiss %&gt;%  mutate(part_agriculteurs2 = as.numeric(part_agriculteurs)) %&gt;% head(1)</code></pre>
+<pre><code>## # A tibble: 1 × 8
+##   canton     indice_fecondite part_agriculteurs part_examen part_education part_catholique
+##   &lt;chr&gt;                 &lt;dbl&gt;             &lt;dbl&gt;       &lt;int&gt;          &lt;int&gt;           &lt;dbl&gt;
+## 1 Courtelary             80.2                17          15             12            9.96
+## # … with 2 more variables: mortalite_infantile &lt;dbl&gt;, part_agriculteurs2 &lt;dbl&gt;</code></pre>
+<p>Ou en réutilisant le même nom (c’est bien une nouvelle variable, elle n’a pas le même type) :</p>
+<pre class="r"><code>swiss %&gt;% mutate(part_education = as.numeric(part_education)) %&gt;% head(1) </code></pre>
+<pre><code>## # A tibble: 1 × 7
+##   canton     indice_fecondite part_agriculteurs part_examen part_education part_catholique
+##   &lt;chr&gt;                 &lt;dbl&gt;             &lt;dbl&gt;       &lt;int&gt;          &lt;dbl&gt;           &lt;dbl&gt;
+## 1 Courtelary             80.2                17          15             12            9.96
+## # … with 1 more variable: mortalite_infantile &lt;dbl&gt;</code></pre>
+<p>REMARQUE : La syntaxe ci-dessous est également valide mais son comportement est différent quand on accède à des bases de données, elle est donc à proscrire.</p>
+<pre class="r"><code>swiss %&gt;%  mutate(part_education2 = part_education, part_education = as.numeric(part_education2))</code></pre>
+</div>
+<div id="les-types-de-données-en-r" class="section level2">
+<h2>Les types de données en R</h2>
+<p>Les conversions vers un type de donnée <code>&lt;type&gt;</code> se font systématiquement avec une fonction qui se nomme <code>as.&lt;type&gt;()</code> et peut se tester avec une fonction <code>is.&lt;type&gt;()</code>. Il existe potentiellement un nombre infini de types de données car on peut en définir de nouveaux. Les plus fréquents sont :</p>
+<table style="width:100%;">
+<colgroup>
+<col width="46%" />
+<col width="36%" />
+<col width="16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>nom R</th>
+<th>Exemple</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>double</strong></td>
+<td>42</td>
+<td>virgule flottante double précision</td>
+</tr>
+<tr class="even">
+<td><strong>integer</strong></td>
+<td>42L</td>
+<td>entier</td>
+</tr>
+<tr class="odd">
+<td><strong>numeric</strong></td>
+<td></td>
+<td>un des deux cas précédents</td>
+</tr>
+<tr class="even">
+<td><strong>character</strong></td>
+<td>“42”</td>
+<td>chaîne de caractères de longueur variable</td>
+</tr>
+<tr class="odd">
+<td><strong>logical</strong></td>
+<td>TRUE, FALSE</td>
+<td>booléen</td>
+</tr>
+</tbody>
+</table>
+<p>…ainsi que <strong>data.frame</strong> : une table de données (comme <em>swiss</em>) et <strong>tibble</strong> qui en est un sous-type.</p>
+</div>
+<div id="recoder-des-variables-ifelse" class="section level2">
+<h2>Recoder des variables : <code>ifelse()</code></h2>
+<p>Syntaxe :</p>
+<ul>
+<li><code>ifelse(condition)</code>,</li>
+<li><code>valeur_si_vrai</code>,</li>
+<li><code>valeur_si_faux)</code></li>
+</ul>
+<pre class="r"><code>swiss %&gt;%  mutate(religion = ifelse(part_catholique &lt; 50, &quot;Protestant&quot;, &quot;Catholique&quot;))</code></pre>
+<pre><code>## # A tibble: 47 × 8
+##    canton       indice_fecondite part_agriculteurs part_examen part_education part_catholique
+##    &lt;chr&gt;                   &lt;dbl&gt;             &lt;dbl&gt;       &lt;int&gt;          &lt;int&gt;           &lt;dbl&gt;
+##  1 Courtelary               80.2              17            15             12            9.96
+##  2 Delemont                 83.1              45.1           6              9           84.8 
+##  3 Franches-Mnt             92.5              39.7           5              5           NA   
+##  4 Moutier                  85.8              36.5          12              7           33.8 
+##  5 Neuveville               76.9              43.5          17             15            5.16
+##  6 Porrentruy               76.1              35.3           9              7           90.6 
+##  7 Broye                    83.8              70.2          16              7           NA   
+##  8 Glane                    92.4              67.8          14              8           97.2 
+##  9 Gruyere                  82.4              53.3          12              7           97.7 
+## 10 Sarine                   82.9              45.2          16             13           91.4 
+## # … with 37 more rows, and 2 more variables: mortalite_infantile &lt;dbl&gt;, religion &lt;chr&gt;</code></pre>
+</div>
+<div id="travailler-avec-des-données-manquantes" class="section level2">
+<h2>Travailler avec des données manquantes</h2>
+<p>Les valeurs manquantes sont le principal point d’incompatibilité avec SAS et leur traitement nécessite de redoubler d’attention quand on convertit un programme car le fonctionnement est radicalement différent en R :</p>
+<ul>
+<li><p>Chaque type dispose de sa propre valeur manquante <code>NA</code> (pour “Not Available”). Ceci est vrai pour les nombres mais aussi pour les chaînes de caractères (vide n’est pas manquant), les booléens (vrai, faux et “je ne sais pas”), et le reste…</p></li>
+<li><p>Sur les nombres, il ne faut pas confondre <code>NA</code> et <code>NaN</code> (pour “Not A Number”). Le résultat d’un calcul impossible (comme une division par zéro), ne produit pas une valeur manquante mais bien un résultat numérique de valeur <code>NaN</code>. De plus, R connaît les nombres complexes.</p></li>
+<li><p>Toute opération impliquant une valeur manquante produit une valeur manquante, en particulier les comparaisons :
+<span style="color: red">
+<code>NA</code> n’est ni vrai, ni faux (il est faux en SAS).
+<code>NA</code> n’est pas ordonné (il est plus petit que tout en SAS)</span></p></li>
+</ul>
+<p>Dans les calculs statistiques (par exemple avec les fonctions appelées par <code>summarise</code>), il y a généralement un argument supplémentaire <code>na.rm</code> (pour “remove”) qui permet de ne pas tenir compte des valeurs manquantes, mais son positionnement par défaut est souvent à “faux” (<code>FALSE</code>).</p>
+<ul>
+<li>Le test d’égalité avec valeur manquante (<code>... == NA</code>) renvoie systématiquement “valeur manquante”, y compris vis-à-vis de “valeur manquante”. La seule façon de faire le test est de recourir à la fonction <code>is.na()</code>.</li>
+</ul>
+</div>
+<div id="travailler-avec-des-données-manquantes-is.na" class="section level2">
+<h2>Travailler avec des données manquantes : <code>is.na()</code></h2>
+<p>Exemple de recodage d’une valeur manquante :</p>
+<pre class="r"><code>swiss %&gt;% 
+    mutate(religion = ifelse(part_catholique &lt; 50, &quot;Protestant&quot;, &quot;Catholique&quot;)) %&gt;% 
+    mutate(religion = ifelse(is.na(religion), &quot;Inconnue&quot;, religion))</code></pre>
+<pre><code>## # A tibble: 47 × 8
+##    canton       indice_fecondite part_agriculteurs part_examen part_education part_catholique
+##    &lt;chr&gt;                   &lt;dbl&gt;             &lt;dbl&gt;       &lt;int&gt;          &lt;int&gt;           &lt;dbl&gt;
+##  1 Courtelary               80.2              17            15             12            9.96
+##  2 Delemont                 83.1              45.1           6              9           84.8 
+##  3 Franches-Mnt             92.5              39.7           5              5           NA   
+##  4 Moutier                  85.8              36.5          12              7           33.8 
+##  5 Neuveville               76.9              43.5          17             15            5.16
+##  6 Porrentruy               76.1              35.3           9              7           90.6 
+##  7 Broye                    83.8              70.2          16              7           NA   
+##  8 Glane                    92.4              67.8          14              8           97.2 
+##  9 Gruyere                  82.4              53.3          12              7           97.7 
+## 10 Sarine                   82.9              45.2          16             13           91.4 
+## # … with 37 more rows, and 2 more variables: mortalite_infantile &lt;dbl&gt;, religion &lt;chr&gt;</code></pre>
+<p><strong>dplyr</strong> propose aussi :</p>
+<pre class="r"><code>swiss %&gt;% 
+  mutate(religion = coalesce(religion, &quot;inconnu&quot;))</code></pre>
+</div>
+<div id="recoder-des-variables-case_when" class="section level2">
+<h2>Recoder des variables : <code>case_when()</code></h2>
+<p>Syntaxe :</p>
+<p><code>case_when(condition1 ~ valeur1</code>,
+<code>condition2 ~ valeur2</code>,
+<code>...</code>,
+<code>conditionN ~ valeur2</code>,
+<code>TRUE       ~ valeur_par_défaut)</code></p>
+<p>Les conditions sont explorées successivement jusqu’à ce qu’une d’entre elles donne <code>TRUE</code>, elles ne sont donc pas nécessairement exclusives l’une de l’autre. La dernière ligne “voiture balai” (qui n’est pas obligatoire) exploite cette fonctionnalité.</p>
+<p>Décodons la variable <code>Education</code> :</p>
+<pre class="r"><code>swiss %&gt;% 
+  mutate(sexe_ = case_when(part_catholique &lt; 50  ~ &quot;Protestant&quot;,
+                           part_catholique &gt;= 50 ~ &quot;Catholique&quot;,
+                           is.na(religion)       ~ &quot;Inconnue&quot;))</code></pre>
+</div>
+<div id="décoder-regrouper-avec-case_when" class="section level2">
+<h2>Décoder, regrouper avec case_when()</h2>
+<p>Dans un fichier Insee, on a 32 modalités de catégories socioprofessionnelles (csm et csp), ce qui constitue un niveau trop fin, on souhaite alors les regrouper en un nombre plus réduit.</p>
+<pre class="r"><code># liste des modalités
+naissances2021 %&gt;% distinct(csm)
+
+# regroupement
+naissances2021 %&gt;% mutate(
+    csm_ = case_when(                                         # On crée une nouvelle colone &#39;csm_&#39;,
+        substr(csm, 1, 1) == &#39;1&#39; ~ &quot;agriculteurs&quot;,              # en regardant le contenu de la colonne &#39;csm&#39; :
+        substr(csm, 1, 1) == &#39;2&#39; ~ &quot;chefs d&#39;entreprise&quot;,        # la sous-chaine allant du caractère no 1 au caractère no 1
+        substr(csm, 1, 1) == &#39;3&#39; ~ &quot;cadres&quot;,
+        substr(csm, 1, 1) == &#39;4&#39; ~ &quot;professions intermédiaires&quot;,
+        substr(csm, 1, 1) == &#39;5&#39; ~ &quot;employés&quot;,
+        substr(csm, 1, 1) == &#39;6&#39; ~ &quot;ouvriers&quot;,                  # les modalités 1 à 6 sont recodées explicitement
+        activp            &lt;= &#39;2&#39; ~ &quot;chômeurs ou inactifs&quot;,      # pour les autres cas on regarde si &#39;activp&#39; vaut 2
+        TRUE                     ~ &quot;indéterminé&quot;))              # et si tout échoue...</code></pre>
+</div>

@@ -1,0 +1,176 @@
+---
+title: "Statistiques par modalités"
+author: "Jocelyn Béziau"
+date: 2022-05-06
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Regrouper selon une catégorie : `group_by()` 
+
+Nous avons compté le nombre de naissances en France entière. Maintenant, nous souhaitons avoir une répartition par région.
+
+On peut simplement indiquer la variable de regroupement en paramètre de `count()`.
+Mais cela n'est possible que pour un comptage simple.
+
+```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE}
+# tout simplement :
+tab_naissances %>% count(regnais)
+
+# ou bien :
+tab_naissances %>% 
+    summarise(nombre_naissances = n())
+```
+
+
+* Lorsqu'on utilise un regroupement, on perd toutes les variables détail, ne restent que la ou les variables de regroupement et les calculs.
+
+* Pour faire des statistiques sur modalités croisées, il suffit de mettre plusieurs variables de regroupement.
+
+```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE}
+tab_naissances %>% 
+  group_by(regnais, sexe) %>% 
+  summarise(nombre_naissances = n())
+```
+
+## Entre `filter()` et `summarise()`
+
+Il est possible de filtrer sur une condition impliquant une statistique, en redescendant le résultat d'un calcul sur un groupe de lignes au niveau de chacune des lignes. Par exemple pour sélectionner les communes ayant la plus forte population de leur département  :
+
+```{r cache = TRUE, message = FALSE, warning = FALSE}
+p <- import("donnees/support/poplegale_6815.sas7bdat")
+p %>% group_by(D) %>% 
+    filter(PMUN15 == max(PMUN15))
+```
+
+Question : Pourquoi uniquement 11 départements (la table initiale contient 98 départements) ?
+
+---- 
+
+<!--Réponse : Le maximum d'un vecteur contenant des valeurs manquantes... est une valeur manquante. Ainsi, tous les départements pour lesquels au moins une commune n'a pas de valeur renseignée pour `PMUN15` ont leur maximum à `NA`. La comparaison entre cette valeur et la population de chaque commune renvoie alors `NA` et non `TRUE`. Ces départements ne sont donc pas inclus dans le résultat de `filter()`.-->
+
+```{r}
+p %>% group_by(D) %>% 
+    summarise(pmax = max(PMUN15)) %>%
+    arrange(desc(pmax)) %>% 
+    head(15)
+```
+
+Pour obtenir le maximum parmi les valeurs renseignées, on peut utiliser l'argument `na.rm = TRUE` dans la fonction `max()` :
+
+```{r warning = FALSE, message = FALSE}
+p %>% group_by(D) %>% 
+    summarise(pmax = max(PMUN15, na.rm = TRUE)) %>%
+    arrange(desc(pmax)) %>% 
+    head(15)
+```
+
+## Entre `mutate()` et `summarise()`
+
+Il est possible de créer une nouvelle colonne impliquant une statistique, en redescendant le résultat d'un calcul fait sur un groupe de lignes au niveau de chacune des lignes du groupe :
+```{r echo = TRUE, warning = FALSE, message = FALSE}
+p %>% group_by(D) %>%
+    mutate (PMUN15max = max(PMUN15, na.rm = TRUE))
+```
+
+
+## Tris : `arrange()`
+
+Lorsqu'on utilise un regroupement, le résultat est trié en majeur selon ce regroupement.
+
+Si on souhaite effectuer un autre tri, on utilise la fonction `arrange()`.
+
+```{r echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE}
+tab_naissances %>% 
+    group_by(regnais) %>%                     # Par région...
+    summarise(nombre_naissances = n()) %>%    # on calcule le nombre de naissances
+    arrange(nombre_naissances)                # et on trie le tout par ordre croissant des naissances
+```
+
+## Accéder à une ligne particulière d'un groupe : `row_number()`
+
+A l'intérieur de chaque groupe, le numéro d'ordre de la ligne/observation est accessible par la fonction `row_number` de **dplyr** :
+
+```{r eval = FALSE}
+poplegale_6815 %>%                     
+    group_by(D) %>%                           # Par département
+    arrange(desc(PMUN15)) %>%                 #   on range par ordre décroissant, au sein de chaque département
+    filter(row_number() ==  1)                   # on ne garde que la première commune
+```
+
+## La fonction `ungroup()`
+
+Le regroupement de modalités par `group_by()` produit une table qui a en attribut la liste des variables de regroupement. Lorsqu'il y en a plusieurs, la fonction `summarise()` n'enlève que la dernière variable : la table produite reste groupée sur les premières variables.
+
+
+```{r eval = FALSE}
+tab_naissances %>%                     
+  group_by(regnais, depnais) %>%            # Par département (et région pour garder celle ci)
+  summarise(nombre_naissances = n()) -> a   # on calcule le nombre de naissances
+                                            # et on sauve dans 'a'
+a %>%
+  filter(nombre_naissances == max(nombre_naissances))   
+```
+Et on récupère le département ayant le plus grand nombre de naissances, dans chaque région.
+
+Pour supprimer l'ensemble des regroupements, utiliser `ungroup()`. Pour le département qui a le plus de naissances, France entière :
+```{r eval = FALSE}
+a %>%                     
+  ungroup() %>%                               
+  filter(nombre_naissances == max(nombre_naissances))   
+```
+
+## Exercice
+
+1) Calculer le nombre de naissances par département. Quel est le département qui a le plus de naissances?
+
+2) Calculer le nombre de naissances par commune. Par département, quelles sont les communes qui ont le plus de naissances ?
+
+3) Calculer le nombre de naissances par jour de la semaine. En recodant le jour de la semaine, réordonner les résultats (lundi le 1er, mardi le 2ème...)
+
+## Solution de l'exercice (1/2)
+
+```{r}
+tab_naissances %>%
+    group_by(depnais) %>% 
+    summarise(n = n()) %>%
+    filter(n == max(n))
+
+tab_naissances %>% 
+    group_by(depnais, comnais) %>%
+    summarise(n = n()) %>%
+    filter(n == max(n))
+```
+
+## Solution de l'exercice (2/2)
+```{r}
+tab_naissances %>% 
+    mutate(j = case_when(jsemaine == "lundi"    ~ 1,
+                         jsemaine == "mardi"    ~ 2,
+                         jsemaine == "mercredi" ~ 3,
+                         jsemaine == "jeudi"    ~ 4,
+                         jsemaine == "vendredi" ~ 5,
+                         jsemaine == "samedi"   ~ 6,
+                         jsemaine == "dimanche" ~ 7)) %>%
+    group_by(j, jsemaine) %>% 
+    summarise(n = n())
+```
+

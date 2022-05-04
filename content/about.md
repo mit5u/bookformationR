@@ -1,13 +1,18 @@
 ---
 date: 2022-05-03
-title: About
+title: Principes fondamentaux
 ---
 
-Site compagnon de la formation "Prise en main rapide de données sous R", dispensée les 09 et 10 mai 2022
+R est un langage de programmation open-source dédié à la statistique, qui travaille en mémoire vive
 
-À continuer à partir de https://git.lab.sspcloud.fr/jbeziau/formationR-SDSE/-/edit/master/diapo_refonte.Rmd
+Tout ce qui existe en R est un objet
 
-Roadmap :
-* Importer les 16 séquences dans les index.Rmd correspondant
-* Gérer les images >.>
-* Remplacer les jeux de données par des datasets ouverts (issus des packages utilisés dans la formation par exemple)
+Tout ce qui se produit est le résultat d'un appel de fonctions
+
+Les fonctions peuvent être enrichies par des packages
+
+Les packages s'installent depuis un dépôt (par exemple, le CRAN)
+
+Un package installé doit être chargé en mémoire à chaque nouvelle session
+
+Appuyer sur F1 pour ouvrir l'aide de la fonction sélectionnée (ou exécuter `?nom_fonction`)

@@ -1,3 +1,146 @@
+---
+title: "Fusion de tables"
+author: "Jocelyn Béziau"
+date: 2022-05-09
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
 
 
 
+<div id="jeux-dexemple" class="section level2">
+<h2>Jeux d’exemple</h2>
+<pre class="r"><code>superheros &lt;- tribble(~nom, ~type, ~sexe, ~editeur,
+                      &quot;Magneto&quot;,       &quot;mechant&quot;,   &quot;homme&quot;,            &quot;Marvel&quot;,
+                      &quot;Storm&quot;,        &quot;gentil&quot;,   &quot;femme&quot;,            &quot;Marvel&quot;,
+                      &quot;Mystique&quot;,       &quot;mechant&quot;,   &quot;femme&quot;,            &quot;Marvel&quot;,
+                      &quot;Batman&quot;,        &quot;gentil&quot;,   &quot;homme&quot;,                &quot;DC&quot;,
+                      &quot;Joker&quot;,       &quot;mechant&quot;,   &quot;homme&quot;,                &quot;DC&quot;,
+                      &quot;Catwoman&quot;,       &quot;mechant&quot;,   &quot;femme&quot;,                &quot;DC&quot;,
+                      &quot;Hellboy&quot;,        &quot;gentil&quot;,   &quot;homme&quot;, &quot;Dark Horse Comics&quot;)
+
+editeurs &lt;- tribble( ~editeur, ~annee_creation,
+                     &quot;DC&quot;,       1934,
+                     &quot;Marvel&quot;,       1939,
+                     &quot;Image&quot;,       1992)</code></pre>
+</div>
+<div id="fusion-verticale-ajouter-des-colonnes" class="section level2">
+<h2>Fusion verticale (ajouter des colonnes)</h2>
+<pre class="r"><code>random_value &lt;- data.frame(alea = runif(nrow(superheros), 1, 10))
+superheros %&gt;% bind_cols(random_value)</code></pre>
+<pre><code>## # A tibble: 7 × 5
+##   nom      type    sexe  editeur            alea
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;             &lt;dbl&gt;
+## 1 Magneto  mechant homme Marvel             9.23
+## 2 Storm    gentil  femme Marvel             9.43
+## 3 Mystique mechant femme Marvel             3.58
+## 4 Batman   gentil  homme DC                 8.47
+## 5 Joker    mechant homme DC                 6.78
+## 6 Catwoman mechant femme DC                 5.67
+## 7 Hellboy  gentil  homme Dark Horse Comics  7.63</code></pre>
+</div>
+<div id="fusion-horizontale-ajouter-des-lignes" class="section level2">
+<h2>Fusion horizontale (ajouter des lignes)</h2>
+<pre class="r"><code>(a &lt;- superheros %&gt;% filter(editeur==&quot;Marvel&quot;) %&gt;% select(nom,sexe,type))</code></pre>
+<pre><code>## # A tibble: 3 × 3
+##   nom      sexe  type   
+##   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;  
+## 1 Magneto  homme mechant
+## 2 Storm    femme gentil 
+## 3 Mystique femme mechant</code></pre>
+<pre class="r"><code>(b &lt;- superheros %&gt;% filter(editeur==&quot;DC&quot;))</code></pre>
+<pre><code>## # A tibble: 3 × 4
+##   nom      type    sexe  editeur
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;  
+## 1 Batman   gentil  homme DC     
+## 2 Joker    mechant homme DC     
+## 3 Catwoman mechant femme DC</code></pre>
+<pre class="r"><code>a %&gt;% bind_rows(b)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   nom      sexe  type    editeur
+##   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;  
+## 1 Magneto  homme mechant &lt;NA&gt;   
+## 2 Storm    femme gentil  &lt;NA&gt;   
+## 3 Mystique femme mechant &lt;NA&gt;   
+## 4 Batman   homme gentil  DC     
+## 5 Joker    homme mechant DC     
+## 6 Catwoman femme mechant DC</code></pre>
+</div>
+<div id="fusion-selon-une-clef-de-jointure" class="section level2">
+<h2>Fusion selon une clef de jointure</h2>
+<p>(sans préciser le <code>by</code>, la fonction utilise l’ensemble des variables dont le nom est commun aux deux tables)</p>
+<pre class="r"><code>inner_join(superheros, editeurs, by = &quot;editeur&quot;)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   nom      type    sexe  editeur annee_creation
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;            &lt;dbl&gt;
+## 1 Magneto  mechant homme Marvel            1939
+## 2 Storm    gentil  femme Marvel            1939
+## 3 Mystique mechant femme Marvel            1939
+## 4 Batman   gentil  homme DC                1934
+## 5 Joker    mechant homme DC                1934
+## 6 Catwoman mechant femme DC                1934</code></pre>
+</div>
+<div id="conserver-uniquement-les-lignes-présentes-dans-la-première-table" class="section level2">
+<h2>Conserver uniquement les lignes présentes dans la première table</h2>
+<pre class="r"><code>left_join(superheros, editeurs, by = &quot;editeur&quot;)</code></pre>
+<pre><code>## # A tibble: 7 × 5
+##   nom      type    sexe  editeur           annee_creation
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;                      &lt;dbl&gt;
+## 1 Magneto  mechant homme Marvel                      1939
+## 2 Storm    gentil  femme Marvel                      1939
+## 3 Mystique mechant femme Marvel                      1939
+## 4 Batman   gentil  homme DC                          1934
+## 5 Joker    mechant homme DC                          1934
+## 6 Catwoman mechant femme DC                          1934
+## 7 Hellboy  gentil  homme Dark Horse Comics             NA</code></pre>
+</div>
+<div id="conserver-toutes-les-lignes-des-deux-tables" class="section level2">
+<h2>Conserver toutes les lignes des deux tables</h2>
+<pre class="r"><code>full_join(superheros, editeurs, by = &quot;editeur&quot;)</code></pre>
+<pre><code>## # A tibble: 8 × 5
+##   nom      type    sexe  editeur           annee_creation
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;                      &lt;dbl&gt;
+## 1 Magneto  mechant homme Marvel                      1939
+## 2 Storm    gentil  femme Marvel                      1939
+## 3 Mystique mechant femme Marvel                      1939
+## 4 Batman   gentil  homme DC                          1934
+## 5 Joker    mechant homme DC                          1934
+## 6 Catwoman mechant femme DC                          1934
+## 7 Hellboy  gentil  homme Dark Horse Comics             NA
+## 8 &lt;NA&gt;     &lt;NA&gt;    &lt;NA&gt;  Image                       1992</code></pre>
+</div>
+<div id="conserver-uniquement-les-lignes-communes-aux-deux-tables" class="section level2">
+<h2>Conserver uniquement les lignes communes aux deux tables</h2>
+<pre class="r"><code>inner_join(superheros, editeurs)</code></pre>
+<pre><code>## Joining, by = &quot;editeur&quot;</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   nom      type    sexe  editeur annee_creation
+##   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;            &lt;dbl&gt;
+## 1 Magneto  mechant homme Marvel            1939
+## 2 Storm    gentil  femme Marvel            1939
+## 3 Mystique mechant femme Marvel            1939
+## 4 Batman   gentil  homme DC                1934
+## 5 Joker    mechant homme DC                1934
+## 6 Catwoman mechant femme DC                1934</code></pre>
+</div>
+<div id="récupérer-toutes-les-lignes-de-la-première-table-qui-ne-sont-pas-présentes-dans-la-seconde" class="section level2">
+<h2>Récupérer toutes les lignes de la première table qui ne sont pas présentes dans la seconde</h2>
+<pre class="r"><code>anti_join(editeurs, superheros, by= &quot;editeur&quot;)</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   editeur annee_creation
+##   &lt;chr&gt;            &lt;dbl&gt;
+## 1 Image             1992</code></pre>
+</div>
+<div id="en-résumé" class="section level2">
+<h2>En résumé</h2>
+<ul>
+<li><code>bind_rows()</code> : ajouter des lignes (à partir d’une table contenant les mêmes variables)</li>
+<li><code>bind_cols()</code> : ajouter des colonnes (à partir d’une table contenant autant de lignes)</li>
+<li><code>left_join()</code> : toutes les lignes présentes dans la première table, enrichies des variables observées dans la seconde</li>
+<li><code>right_join()</code> : toutes les lignes présentes dans la seconde table, enrichies des variables observées dans la première</li>
+<li><code>full_join()</code> : toutes les lignes présentes dans l’une ou l’autre table, enrichies mutuellement des variables observées</li>
+<li><code>inner_join()</code> : uniquement les lignes présentes dans les deux tables, enrichies mutuellement des variables observées</li>
+<li><code>anti_join()</code> : toutes les lignes de la première table qui n’ont pas de correspondance dans la seconde</li>
+<li><code>semi_join()</code> : toutes les lignes de la première table qui ont une correspondance dans la seconde</li>
+</ul>
+</div>

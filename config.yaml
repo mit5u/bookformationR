@@ -1,6 +1,6 @@
 baseurl: /
 languageCode: en-us
-title: A Hugo website
+title: Prise en main rapide de R
 theme: hugo-lithium
 googleAnalytics: ''
 disqusShortname: ''
@@ -14,16 +14,16 @@ permalinks:
   post: /:year/:month/:day/:slug/
 menu:
   main:
-    - name: About
+    - name: Principes fondamentaux
       url: /about/
-    - name: GitHub
-      url: https://github.com/rstudio/blogdown
-    - name: Twitter
-      url: https://twitter.com/rstudio
+    - name: Formations SSP
+      url: https://www.sspcloud.fr/formation
+    - name: Tchap R
+      url: https://matrix.to/#/#RdIezwNF:agent.finances.tchap.gouv.fr
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
-  description: A website built through Hugo and blogdown.
+  description: Ce site ne pourrait pas exister pas sans Hugo et blogdown.
   favicon: favicon.ico
   highlightjsCDN: //cdnjs.cloudflare.com/ajax/libs
   highlightjsLang:

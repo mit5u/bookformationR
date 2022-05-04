@@ -1,0 +1,137 @@
+---
+title: "Statistiques simples et pondérées"
+author: "Jocelyn Béziau"
+date: 2022-05-05
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Calculer un effectif
+
+Nombre de lignes de la table
+```{r}
+tab_naissances %>%  count()
+# ou bien (même résultat) :
+tab_naissances %>%  summarise(nombre_de_naissances = n())
+```
+
+Total des naissances gémellaires
+```{r}
+tab_naissances %>% summarise(nombre_de_naissances_multiples = sum(jumeau == "1"))
+```
+
+`summarise()` propose aussi un ensemble de statistiques simples :
+* nombre, somme : `n(), n_distinct(), sum()`
+* indicateurs centraux : `mean(), median()`
+* indicateurs de dispersion : `min(), max(), quantile(), sd(), var()`
+* position : `first(), last(), nth()`
+
+## Calculer plusieurs statistiques à la fois
+```{r}
+tab_naissances %>% 
+  summarise(q1_mere      = quantile(agemere, 0.25),
+            mediane_mere = quantile(agemere, 0.5),
+            q3_mere      = quantile(agemere, 0.75))
+```
+
+Et les extrêmes :
+```{r}
+tab_naissances %>% 
+  summarise(min_mere = min(agemere),
+            max_mere = max(agemere))
+```
+
+## Calculer des statistiques pondérées
+
+Les fonctions utilisant des pondérations se trouvent dans le package **Hmisc**, elles utilisent un argument supplémentaire `w` qui permet de passer la colonne contenant les pondérations. Il s'agit de :
+
+- wtd.mean : la moyenne
+- wtd.var : la variance (en déduire l'écart type si besoin)
+- wtd.quantile : un quantile
+
+Jeu d'essai : 
+```{r echo = FALSE}
+df <- as.tibble(data.frame(poids = c(1,1,1,1,3),
+                 age = c(20,30,40,50,60)))
+df
+```
+
+```{r message = FALSE}
+library(Hmisc)
+df %>% summarise(premier_quartile = wtd.quantile(age, w = poids, probs = .25),
+                 mediane = wtd.quantile(age, w = poids, probs = .5),
+                 moyenne = wtd.mean(age, w = poids)
+                 )
+```
+
+## Travailler sur un sous-ensemble de lignes : la fonction `filter()`
+
+La table concerne la France entière. Si nous souhaitons étudier une région seule, on peut utiliser un filtre (condition).
+
+Par exemple, on souhaite connaître le nombre de naissances en Nouvelle Aquitaine et de mère française.
+
+```{r include = TRUE, echo= TRUE, warning = FALSE, message = FALSE, eval = FALSE}
+tab_naissances %>% 
+  filter(regnais == '75' & indnatm == '1') %>% 
+  summarise(nombre_naissances_aquitaine = n())
+```
+
+Si on a plusieurs conditions, on les réunit avec les opérateurs logiques :
+
+& et (<span style="color: green">`and`</span>), | ou (<span style="color: green">`or`</span>), ! négation (<span style="color: green">`not`</span>)
+
+Les opérateurs de comparaison sont :
+
+* **`==`** (<span style="color: green">`EQ`</span>), **`!=`** (<span style="color: green">`NE`</span>)
+* **`> >= < <=`**
+* **`%in%`** est contenu dans une liste (<span style="color: green">`in`</span>)
+
+<span style="color: red">Attention à la priorité des opérateurs. Par exemple `!1+2` renvoie `FAUX`  en R, mais `!(1+2)` renvoie `VRAI`</span>
+
+## Exercice
+
+1) Calculer le nombre de naissances qui remplissent toutes les conditions suivantes :
+* la naissance a lieu dans le département d'Ille-et-Vilaine (*depnais* == 35)
+* la mère a plus de 40 ans (*agemere* > 40)
+* la naissance a lieu hors mariage (année de mariage *amar* = "0000")
+* le bébé est une fille (*sexe* = "2")
+
+2) Même chose pour les départements de Loire-Atlantique (44) et du Mainte-et-Loire (49)
+
+## Solution de l'exercice
+
+```{r}
+tab_naissances %>%
+  filter((depnais == "35") &
+        (agemere > 40) &
+        (amar == "0000") &
+        (sexe == "2")) %>% count()
+```
+
+```{r}
+tab_naissances %>%
+  filter(((depnais == "44") | (depnais == "49")) &
+        (agemere > 40) &
+        (amar == "0000") &
+        (sexe == "2")) %>% count()
+```
+
+

@@ -1,0 +1,94 @@
+---
+title: "Bases de données"
+author: "Jocelyn Béziau"
+date: 2022-05-14
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(dbplyr)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Travailler sur une base de données PostgreSQL avec le langage SQL
+
+* Récupérer un **driver** adapté au moteur de bases de données qu'on va utiliser.<br>
+* Récupérer un **identifiant de connexion** vers la base ciblée avec le driver récupéré.
+
+```{r echo = TRUE, eval = FALSE}
+library(RPostgreSQL)                          
+driver <- dbDriver("PostgreSQL")
+base <- dbConnect(driver, dbname = "postgres", host = "localhost", port = 5432, user = "h2izgk", password = params$password)
+```
+
+* Travailler sur la base...
+* Et terminer en se déconnectant de la base :
+```{r eval = FALSE, echo = TRUE}
+dbDisconnect(base)
+```
+
+## Explorer le contenu de la base
+```{r echo = TRUE, eval = FALSE}
+dbGetQuery(base, "SELECT schema_name FROM information_schema.schemata") # liste des schémas de la base
+dbListTables(base)                                    # liste des tables du schéma public
+
+dbListFields(base,"pays")                             # liste des colonnes d'une table du schéma public (schéma par défaut)
+dbListFields(base,c("formation","poplegale_6815"))    # liste des colonnes d'une table du schéma 'formation'
+```
+
+## Récupérer le résultat d'une requête SQL
+
+```{r eval = FALSE}
+dbGetQuery(base,"SELECT * FROM formation.poplegale_6815
+                   WHERE pmun15>300000")
+```
+
+
+## Travailler sur une table PostgreSQL comme sur une table R
+
+La fonction `dbplyr::tbl()` permet d'établir une connexion à une table spécifique
+
+```{r echo = TRUE, eval = FALSE}
+library(dbplyr)
+
+pops_db <- tbl(base, in_schema("formation", "poplegale_6815"))
+class(pops_db) # tbl_dbi, tbl_sql, tbl_lazy, tbl
+
+str(pops_db) # liste : connecteur PostgreSQL + descripteur de la table
+
+pops_db %>% filter(PMUN15 > 1000)
+
+pops_db %>% filter(PMUN15 > 1000) %>% # on travaille sur la base PostgreSQL
+    collect() %>% # on travaille désormais sur vrai un objet R
+    summarise(across(where(is.numeric), sum, na.rm = TRUE))
+```
+
+## Précautions d'usage pour les requêtes sur base de données depuis R
+
+* `dplyr::collect()` récupère le résultat de la requête dans la session R : selon la requête, l'objet peut être très gros ! 
+* Les traitements R soumis à la base de données via `dbplyr` sont traduits dans une langue que comprend le SGBD, mais la traduction n'est pas toujours adéquate (préférer `%like%` à `stringr::str_detect()` par exemple).
+* `df_db_resul %>% dplyr::show_query()` permet d'afficher la traduction du traitement R qui est effectivement soumise à la base de données pour générer la table `df_db_resul` (utile pour se familiariser avec SQL, ou comprendre pourquoi le résultat ne correspond pas à nos attentes)
+* `df_db_resul %>% dplyr::explain()` permet d'afficher le plan d'exécution de la requête qui aboutit à `df_db_resul` (utile pour se familiariser avec le fonctionnement précis de notre SGBD, ou déterminer s'il faut créer des index pour optimiser le temps de traitement, etc.)
+
+## Base de données locale avec SQLite
+
+```{r echo = TRUE, eval = FALSE}
+library(RSQLite)
+driver <- dbDriver("SQLite")
+base_temporaire <- dbConnect(driver, "") # pas de nom de fichier => base détruite à la fin de la session
+base_en_ram <- dbConnect(driver, ":memory:") # nom de fichier = ":memory:" => base créée en mémoire et non sur le disque
+```

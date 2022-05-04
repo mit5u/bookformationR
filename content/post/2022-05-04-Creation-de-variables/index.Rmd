@@ -158,14 +158,14 @@ swiss %>%
 ```
 
 ## Décoder, regrouper avec case_when()
-On a 32 modalités de catégories socioprofessionnelles (csm et csp), ce qui constitue un niveau trop fin, on souhaite alors les regrouper en un nombre plus réduit.
+Dans un fichier Insee, on a 32 modalités de catégories socioprofessionnelles (csm et csp), ce qui constitue un niveau trop fin, on souhaite alors les regrouper en un nombre plus réduit.
 
 ```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE}
 # liste des modalités
-swiss %>% distinct(csm)
+naissances2021 %>% distinct(csm)
 
 # regroupement
-swiss %>% mutate(
+naissances2021 %>% mutate(
 	csm_ = case_when(                                         # On crée une nouvelle colone 'csm_',
 		substr(csm, 1, 1) == '1' ~ "agriculteurs",              # en regardant le contenu de la colonne 'csm' :
 		substr(csm, 1, 1) == '2' ~ "chefs d'entreprise",        # la sous-chaine allant du caractère no 1 au caractère no 1
@@ -176,40 +176,4 @@ swiss %>% mutate(
 		activp            <= '2' ~ "chômeurs ou inactifs",      # pour les autres cas on regarde si 'activp' vaut 2
 		TRUE                     ~ "indéterminé"))              # et si tout échoue...
 
-```
-
-## Exercice
-
-1) Créer une nouvelle colonne "jweekend_" booléenne qui donne `TRUE` si *jsemaine* tombe un weekend et `FALSE` dans le cas contraire. On pourra utiliser `ifelse()`, `case_when()`... ou aucun des deux!
-
-2) Discrétiser l'âge de la mère : moins de 18, [18,25[ , [25,35[ , [35,45[ , 45 et +
-
-## Solution de l'exercice (A)
-
-### Avec case_when et l'appartenance à une liste
-```{r}
-swiss %>% 
-  mutate(
-    jweekend_ = case_when(jsemaine %in% c("samedi", "dimanche") ~ TRUE,
-                           TRUE                                 ~ FALSE
-                          )
-  )
-```
-`c()` est une fonction de base qui construit un objet fondamental de R : un **vecteur**, si fondamental qu'en fait **il n'y a pas de données scalaires en R**, et `sexe == "1"` aurait pu s'écrire `sexe %in% "1"`. En R, il faut toujours commencer par raisonner en termes d'opérations sur des ensembles.
-
-## Solution de l'exercice (B)
-### Avec un calcul booléen
-```{r}
-swiss %>% 
-  mutate(jweekend_ = (jsemaine %in% c("samedi", "dimanche")))
-```
-
-```{r}
-swiss %>%
-    mutate(age_ = case_when(agemere < 18 ~ 1,
-                            agemere < 25 ~ 2,
-                            agemere < 35 ~ 3,
-                            agemere < 45 ~ 4,
-                            TRUE       ~ 5
-    ))
 ```

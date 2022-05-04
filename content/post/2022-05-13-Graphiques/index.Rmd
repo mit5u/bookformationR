@@ -1,159 +1,300 @@
 ---
-title: "Quelques exemples de graphiques"
+title: "Graphiques"
 author: "Jocelyn Béziau"
-date: 2022-05-03
+date: 2022-05-13
 categories: ["R", "ggplot"]
 tags: ["R", "ggplot", "graphiques", "intro"]
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, eval = TRUE)
-options(scipen=999)  # turn-off scientific notation like 1e+48
-library(ggplot2)
-library(ggthemes)
-theme_set(theme_bw())  # pre-set the bw theme.
-data("midwest", package = "ggplot2")
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+library(ggformula)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
 ```
 
-# Nuage de points
+## Galerie
+
+[Quelques exemples...](https://r-graph-gallery.com/)
+
+## Les graphiques avec R
+
+Il est possible de créer des graphiques de différentes manières avec R :  
+- en utilisant les fonctions de base,
+- en utilisant le package **ggplot2**, qui offre une grammaire cohérente pour les différents types de graphiques possibles,
+- en utilisant d'autres packages existant comme **lattice**, **ggvis** ou **htmlwidgets**...
+
+On fait le choix ici d'utiliser le package **ggformula**, qui offre une interface au package **ggplot2**. Le package **ggformula** permet de créer un graphique en utilisant des **formules** plutôt que d'utiliser les fonctions spécifiques de **ggplot2**.
+
+
+## ggplot2
+**ggplot2** est un package écrit par Hadley Wickham et qui s'appuie sur une grammaire unique permettant de décrire en détail une large gamme de graphiques.
+
+Cette grammaire comporte :  
+- Des données (data.frame et les variables utilisées)
+- Un système de coordonnées (par défaut, un repère cartésien)
+- Une fonction permettant de transformer les données en marqueurs visuels
+- Eventuellement des options.
+
+
+## ggformula
+**ggformula** est un package écrit par Danny Kaplan et Randall Pruim, qui offre une surcouche à **ggplot2**, permettant d'associer une syntaxe légère et une interface de type 'formulaire' à la puissance de **ggplot2**
+
+Par interface 'formulaire', on entend que les fonctions du package **ggformula** pour créer les graphiques seront de la forme  **objectif**(**y** ~ **x**, data = **mes_donnees**)
+
+Noter que, comme dans le package **tables**, la table en entrée n'est pas le premier paramètre : ceci provient de la possibilité d'utiliser uniquement des vecteurs dans la formule et de se passer de table de données.
+
+
+## Afficher la distribution d'une variable discrète : la fonction `gf_bar()`
+On va travailler sur la table *diamonds*, incluse dans le package **ggplot2**.  
+Pour cela, on va charger les librairies **dplyr**, **ggplot2** et **ggformula** (**dplyr** est optionnel mais permettra de vérifier que les graphiques sont corrects) et on va examiner la table *diamonds* :
+
+```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(ggformula)
+head(diamonds, n = 1)
+```
+
+Les fonctions de création de graphiques sont préfixées par *gf_*.  
+
+On va travailler sur la variable *cut* de la table *diamonds*, variable qualitative qui indique la qualité de la taille d'un diamant.
+
+Pour représenter une unique variable qualitative ou discrète, on va utiliser un **diagramme en barre**, défini par la fonction `gf_bar` et en utilisant la formule `~ cut` vu qu'il n'y a qu'une variable :
+
+```{r include = TRUE, echo = TRUE, warning = FALSE,message = FALSE, eval = FALSE}
+diamonds %>% 
+  gf_bar(~cut)
+```
+
+Le graphique obtenu doit correspondre aux résultats d'un tableau de comptage :
 
 ```{r}
-gg <- ggplot(midwest, aes(x=area, y=poptotal)) + 
-    geom_point(aes(col=state, size=popdensity)) + 
-    geom_smooth(method="loess", se=F) + 
-    xlim(c(0, 0.1)) +
-    ylim(c(0, 500000)) +
-    labs(subtitle="Area Vs Population", 
-         y="Population", 
-         x="Area",
-         title="Scatterplot", 
-         caption = "Source: midwest")
+diamonds %>% 
+  select(cut) %>% 
+  table()
+```
 
-plot(gg)
+```{r gf_bar, echo = FALSE}
+diamonds %>% 
+  gf_bar(~cut)
 ```
 
 
-# Bubble plot animé
+## Afficher la distribution d'une variable continue (1/2) : la fonction `gf_histogram`
+On va s'intéresser à la variable *price* de la table *diamonds*, variable quantitative continue donnant le prix en dollars d'un diamant.  
 
-A faire fonctionner... et données à changer -> (pas trop d'idée)
-(voir https://gganimate.com/)
+On va utiliser un **histogramme**, défini par la fonction `gf_histogram` :
+
+```{r}
+diamonds %>% 
+  gf_histogram(~price)
+```
+
+## Afficher la distribution d'une variable continue (2/2) : la fonction `gf_dens`
+On peut aussi représenter la distribution (ou densité) lissée de la variable, définie par la fonction `gf_dens`.  
+
+Attention ! Dans ce cas, R fait une estimation par noyau de la densité de probabilité. Il faut donc s'assurer de bien savoir ce que R fait et comment bien gérer les paramètres.
+
+```{r echo = TRUE, eval = TRUE}
+diamonds %>% 
+  gf_dens(~price)
+```
+
+## Afficher un nuage de points : la fonction `gf_point`
+On va s'intéresser aux variables *price* et *carat* de la table *diamonds*.  
+
+On va utiliser un **nuage de points**, défini par la fonction `gf_point` :
+
+```{r echo = TRUE}
+diamonds %>% 
+  gf_point(carat ~ price)
+```
+
+La variable à droite du tilde `~` définit les abscisses, la variable à gauche les ordonnées
+
+## Afficher les distributions d'un ensemble de variables continues (1/2) : la fonction `gf_boxplot`
+<p>On va s'intéresser à la variable *price* en fonction des modalités de *cut*, de la table *diamonds*.  
+On peut utiliser une **boîte à moustache** ou box-plot, définie par la fonction `gf_boxplot` :<p>
+```{r eval = TRUE}
+diamonds %>% 
+  gf_boxplot(carat ~ cut)
+```
+
+**Attention** : la variable à droite du tilde est la variable discrète.
+
+## Afficher les distributions d'un ensemble de variables continues (1/2) : la fonction `gf_violin`
+On peut également utiliser une représentation en violon, qui illustre une estimation lissée de la distribution des variables.  
+
+**Attention** : les mêmes précautions que pour la représentation de la densité s'appliquent.
+
+```{r eval = TRUE}
+diamonds %>% 
+  gf_violin(carat ~ cut)
+```
+Les résultats devront être compatibles avec ce qu'on peut trouver en calculant la moyenne par modalité discrète
+```{r}
+diamonds %>% 
+  group_by(cut) %>% 
+  summarise(avg = mean(price))
+```
+
+## Représentation d'une série chronologique
+On va maintenant utiliser la table *economics* et les variables *date* et *unemploy*. 
+
+On veut illustrer l'évolution du nombre de chômeurs au cours du temps.
+```{r}
+head(economics, n = 3)
+```
+```{r eval = TRUE}
+economics %>% 
+  gf_line(unemploy ~ date)
+```
+
+## Jouer avec le thème
+Le thème permet d'utiliser un ensemble d'options graphiques pré-définies en une seule commande. Le package **ggformula** offre un certain nombre de thèmes de base, mais il est possible de définir les siens. Ce dernier point est en dehors du périmètre de cette formation.
 
 ```{r eval = FALSE}
-library(gganimate)
-library(gapminder)
-
-# ~20 secondes pour faire le graphique animé
-gm_le <- ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
-  geom_point(alpha = 0.7, show.legend = FALSE) +
-  scale_colour_manual(values = country_colors) +
-  scale_size(range = c(2, 12)) +
-  scale_x_log10() +
-  facet_wrap(~continent) +
-  # Here comes the gganimate specific bits
-  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
-  transition_time(year) +
-  ease_aes('linear')
-
-anim_save("gm_le.gif", gm_le)
+library(ggformula)
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_bw()) # fond blanc, quadrillage gris
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_gray()) # fond gris, quadrillage blanc
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_dark()) # fond gris, quadrillage gris foncé
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_minimal()) # fond blanc, quadrillage gris, axes non affichés
 ```
-
-# Barres divergentes
-
-données à changer ->  évolution des secteurs d'activité durant la crise Covid ?
-
-(à partir des données de https://www.insee.fr/fr/statistiques/5017251?sommaire=5017369)
-
-
-
-## Préparation des données
-```{r}
-data("mtcars") 
-mtcars$`car name` <- rownames(mtcars)
-mtcars$mpg_z <- round((mtcars$mpg - mean(mtcars$mpg))/sd(mtcars$mpg), 2)  # compute normalized mpg
-mtcars$mpg_type <- ifelse(mtcars$mpg_z < 0, "below", "above")  # above / below avg flag
-mtcars <- mtcars[order(mtcars$mpg_z), ]  # sort
-mtcars$`car name` <- factor(mtcars$`car name`, levels = mtcars$`car name`)  # convert to factor to retain sorted order in plot.
-```
-
-## Graphique
-```{r}
-ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
-    geom_bar(stat='identity', aes(fill=mpg_type), width=.5)  +
-    scale_fill_manual(name="Mileage", 
-                      labels = c("Above Average", "Below Average"), 
-                      values = c("above"="#00ba38", "below"="#f8766d")) + 
-    labs(subtitle="Normalised mileage from 'mtcars'", 
-         title= "Diverging Bars") + 
-    coord_flip()
-```
-
-# Histogramme empilé
 
 ```{r}
-g <- ggplot(mpg, aes(manufacturer))
-g + geom_bar(aes(fill=class), width = 0.5) + 
-    theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
-    labs(title="Histogram on Categorical Variable", 
-         subtitle="Manufacturer across Vehicle Classes") 
+library(ggformula)
+diamonds %>% 
+  gf_bar(~cut) %>% 
+  gf_theme(theme_dark())
 ```
-# Pyramide de population
 
-données à changer : pyramide des âges Insee
+
+## Jouer avec les formes et les couleurs
+Reprenons la table *economics* et l'évolution du nombre de chômeurs.
+
+```{r eval = FALSE}
+economics %>% 
+  gf_area(unemploy ~ date)
+```
+
+----
+
+On peut modifier les couleurs sans ajouter d'information.
+
+```{r eval = TRUE}
+economics %>% 
+  gf_area(unemploy ~ date, colour = 'black', fill = 'blue', alpha = 0.1)
+```
+
+- colour : couleur du contour
+- fill : couleur de l'aire intérieure
+- alpha : transparence de l'aire intérieure (entre 0 et 1)
+
+----
+
+On peut également modifier les couleurs en ajoutant de l'information.  
+
+Reprenons la table *diamonds*, en utilisant uniquement 500 observations pour des questions de lisibilité. On considère les variables *price* et *carat*.
+
+```{r eval = FALSE}
+diamonds %>% 
+  sample_n(size = 500)
+```
+
+On a déjà défini les coordonnées x et y par *price* et *carat*. On peut ajouter une information supplémentaire avec la variable *cut*. On spécifie que la couleur est une variable en ajoutant un tilde devant.
+
+```{r eval = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, colour = ~cut)
+```
+
+----
+
+On peut aussi faire varier la forme des points.
+```{r eval = FALSE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, shape = ~cut)
+```
+
+Ou même les deux, si on utilise une quatrième variable, la variable *color*.
+```{r eval = TRUE, warning = FALSE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, 
+           colour = ~color,
+           shape = ~cut)
+```
+
+
+## La fonction `gf_labs` : changer le titre
+On peut modifier le titre d'un graphique avec la fonction `gf_labs` :
 
 ```{r}
-email_campaign_funnel <- read.csv("https://raw.githubusercontent.com/selva86/datasets/master/email_campaign_funnel.csv")
-
-brks <- seq(-15000000, 15000000, 5000000)
-lbls = paste0(as.character(c(seq(15, 0, -5), seq(5, 15, 5))), "m")
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_labs(title = "Lien entre prix et carat des diamants")
 ```
 
-## Plot
+## La fonction `gf_labs` : changer le nom des axes
+On peut modifier le nom des axes :
 ```{r}
-ggplot(email_campaign_funnel, aes(x = Stage, y = Users, fill = Gender)) +   # Fill column
-    geom_bar(stat = "identity", width = .6) +   # draw the bars
-    scale_y_continuous(breaks = brks,   # Breaks
-                       labels = lbls) + # Labels
-    coord_flip() +  # Flip axes
-    labs(title="Email Campaign Funnel") +
-    theme_tufte() +  # Tufte theme from ggfortify
-    theme(plot.title = element_text(hjust = .5), 
-          axis.ticks = element_blank()) +   # Centre plot title
-    scale_fill_brewer(palette = "Dark2")  # Color palette
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_labs(x = "Prix en dollars",
+          y = "Taille en carat")
 ```
 
-# Classification 
+## Changer les limites des axes : la fonction `gf_lims`
+On peut modifier l'intervalle des axes, pour des variables continues :
 
-## Préparation des données
-```{r}
-library(ggalt)
-library(ggfortify)
-
-
-# ACP
-df <- iris[c(1, 2, 3, 4)]
-pca_mod <- prcomp(df)
-
-df_pc <- data.frame(pca_mod$x, Species=iris$Species)  # dataframe of principal components
-df_pc_vir <- df_pc[df_pc$Species == "virginica", ]  # df for 'virginica'
-df_pc_set <- df_pc[df_pc$Species == "setosa", ]  # df for 'setosa'
-df_pc_ver <- df_pc[df_pc$Species == "versicolor", ]  # df for 'versicolor'
-
+```{r warning = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_lims(x = c(10000, 20000),
+          y = c(1,2))
 ```
 
-## Graphique 
-```{r} 
-ggplot(df_pc, aes(PC1, PC2, col=Species)) + 
-    geom_point(aes(shape=Species), size=2) +   # draw points
-    labs(title="Iris Clustering", 
-         subtitle="With principal components PC1 and PC2 as X and Y axis",
-         caption="Source: Iris") + 
-    coord_cartesian(xlim = 1.2 * c(min(df_pc$PC1), max(df_pc$PC1)), 
-                    ylim = 1.2 * c(min(df_pc$PC2), max(df_pc$PC2))) +   # change axis limits
-    geom_encircle(data = df_pc_vir, aes(x=PC1, y=PC2)) +   # draw circles
-    geom_encircle(data = df_pc_set, aes(x=PC1, y=PC2)) + 
-    geom_encircle(data = df_pc_ver, aes(x=PC1, y=PC2))
+Certaines observations sont en dehors de la fenêtre représentée sur le graphique : R ne les affiche pas, mais nous prévient qu'il manque des observations sur le graphique.
+
+## La fonction `gf_refine` : changer les graduations des axes
+On peut modifier les graduations d'une variable continue avec les fonctions `gf_refine` et `scale_x_continuous`  ou `scale_y_continuous` :
+```{r eval = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_refine(scale_x_continuous(breaks = c(0,9000,18000)))
 ```
 
-# Voir aussi
+## La fonction `gf_refine` : changer l'ordre des modalités des axes
+On peut également modifier l'ordre des modalités quand on travaille sur une variable discrète, avec `scale_x_discrete` ou `scale_y_discrete` et l'argument `limits` :
 
-* [La page d'origine](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
+```{r eval = TRUE}
+diamonds %>% 
+  gf_bar(~ cut) %>%
+  gf_refine(scale_x_discrete(limits = c("Ideal", "Premium", "Very Good", "Good", "Fair")))
+```
+
+## La fonction `gf_refine` : changer le nom des modalités des axes
+On peut modifier les noms des modalités avec l'argument `labels` :
+```{r eval = TRUE}
+diamonds %>% 
+  gf_bar(~ cut) %>%
+  gf_refine(scale_x_discrete(labels = c("Juste", "Bon", "Très bon", "Premier choix", "Idéal")))
+```

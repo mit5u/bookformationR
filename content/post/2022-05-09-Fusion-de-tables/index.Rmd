@@ -1,0 +1,98 @@
+---
+title: "Fusion de tables"
+author: "Jocelyn Béziau"
+date: 2022-05-09
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Jeux d'exemple
+```{r include = TRUE, eval = TRUE}
+superheros <- tribble(~nom, ~type, ~sexe, ~editeur,
+                      "Magneto",       "mechant",   "homme",            "Marvel",
+                      "Storm",        "gentil",   "femme",            "Marvel",
+                      "Mystique",       "mechant",   "femme",            "Marvel",
+                      "Batman",        "gentil",   "homme",                "DC",
+                      "Joker",       "mechant",   "homme",                "DC",
+                      "Catwoman",       "mechant",   "femme",                "DC",
+                      "Hellboy",        "gentil",   "homme", "Dark Horse Comics")
+
+editeurs <- tribble( ~editeur, ~annee_creation,
+                     "DC",       1934,
+                     "Marvel",       1939,
+                     "Image",       1992)
+
+```
+
+## Fusion verticale (ajouter des colonnes)
+
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+random_value <- data.frame(alea = runif(nrow(superheros), 1, 10))
+superheros %>% bind_cols(random_value)
+```
+
+## Fusion horizontale (ajouter des lignes)
+
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+(a <- superheros %>% filter(editeur=="Marvel") %>% select(nom,sexe,type))
+(b <- superheros %>% filter(editeur=="DC"))
+a %>% bind_rows(b)
+```
+
+## Fusion selon une clef de jointure
+(sans préciser le `by`, la fonction utilise l'ensemble des variables dont le nom est commun aux deux tables)
+
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+inner_join(superheros, editeurs, by = "editeur")
+```
+
+## Conserver uniquement les lignes présentes dans la première table
+
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+left_join(superheros, editeurs, by = "editeur")
+```
+
+## Conserver toutes les lignes des deux tables
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+full_join(superheros, editeurs, by = "editeur")
+```
+
+## Conserver uniquement les lignes communes aux deux tables
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+inner_join(superheros, editeurs)
+```
+
+## Récupérer toutes les lignes de la première table qui ne sont pas présentes dans la seconde
+```{r include = TRUE, eval = TRUE, echo = TRUE}
+anti_join(editeurs, superheros, by= "editeur")
+```
+
+## En résumé
+* `bind_rows()` : ajouter des lignes (à partir d'une table contenant les mêmes variables)
+* `bind_cols()` : ajouter des colonnes (à partir d'une table contenant autant de lignes)
+* `left_join()` : toutes les lignes présentes dans la première table, enrichies des variables observées dans la seconde
+* `right_join()` : toutes les lignes présentes dans la seconde table, enrichies des variables observées dans la première
+* `full_join()` : toutes les lignes présentes dans l'une ou l'autre table, enrichies mutuellement des variables observées
+* `inner_join()` : uniquement les lignes présentes dans les deux tables, enrichies mutuellement des variables observées
+* `anti_join()` : toutes les lignes de la première table qui n'ont pas de correspondance dans la seconde
+* `semi_join()` : toutes les lignes de la première table qui ont une correspondance dans la seconde
+
+
