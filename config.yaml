@@ -18,8 +18,8 @@ menu:
       url: /about/
     - name: Formations SSP
       url: https://www.sspcloud.fr/formation
-    - name: Tchap R
-      url: https://matrix.to/#/#RdIezwNF:agent.finances.tchap.gouv.fr
+    - name: Quiz interjournée
+      url: https://jiji.shinyapps.io/quizz
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
