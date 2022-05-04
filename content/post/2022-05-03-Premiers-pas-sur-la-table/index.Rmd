@@ -1,0 +1,159 @@
+---
+title: "Premiers pas sur la table"
+author: "Jocelyn Béziau"
+date: 2022-05-03
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Premières observations sur la table de données
+
+### Dans les fenêtres de RStudio
+
+* L'objet `tab_naissances` apparaît dans le panneau en haut à droite
+* Le bouton bleu en forme de flèche affiche la liste des variables composant cet objet
+* Cliquer sur le nom de la table l'ouvre dans le panneau en haut à gauche (cette opération peut être chronophage selon le nombre de lignes et de colonnes de l'objet)
+
+### En ligne de commande
+
+```{r eval = FALSE}
+ls() # liste des objets en mémoire
+str(penguins) # liste des variables composant l'objet tab_naissances
+View(penguins) # affiche l'objet dans le panneau en haut à gauche
+head(penguins, 5) # les 5 premières lignes de la table
+tail(penguins, 1) # la dernière ligne de la table
+```
+
+
+## Enchaîner les fonctions : le pipe
+
+Le résultat (sortie) d'une fonction peut être utilisé en argument (entrée) d'une autre fonction. 
+Dans la syntaxe R de base, cet enchaînement se présente sous une forme logique mais peu lisible pour décrire l'enchaînement chronologique des opérations :
+
+`digerer(manger(cuisiner(recette_tajine)))`
+
+L'opérateur `%>%` (pipe), introduit par le package **magrittr** et repris par **dplyr**, facilite la lecture de cet enchaînement d'opérations :
+
+```{r eval = FALSE}
+library(dplyr)
+recette_tajine %>% 
+    cuisiner() %>% # les parenthèses sont optionnelles
+    manger() %>% 
+    digerer()
+```
+
+Les commandes suivantes sont équivalentes :
+
+```{r eval = FALSE}
+penguins %>% head %>% tail(1)
+penguins %>% head() %>% tail(1)
+
+# écriture "R de base"
+tail(head(penguins), 1)
+
+# écriture "hybride", pour les gens à l'esprit embrouillé
+tail(penguins %>% head(), 1)
+head(penguins) %>% tail(1)
+```
+
+
+
+## Sélectionner des colonnes : `select()`
+
+Une première syntaxe, similaire à SQL, permet de conserver une liste de colonnes de la table
+
+```{r eval = TRUE}
+penguins %>% select(species, island, year) %>% head()
+```
+
+Remarque : chaque étape de cet enchaînement crée une nouvelle table, mais à moins d'assigner celle-ci à un objet, elle n'est pas réutilisable par la suite.
+
+
+## Lister les modalités d'une colonne : `distinct()`
+
+La fonction `distinct()` retourne une table sans doublons. Elle peut être utile pour récupérer l'ensemble des modalités observées pour une variable passée en argument
+
+```{r}
+# toutes les modalités prises par la variable species
+penguins %>% distinct(species)
+```
+
+C'est l'équivalent de l'instruction SQL :
+
+```{r engine = "sql", cache = FALSE, eval = FALSE}
+SELECT DISTINCT species FROM penguins
+```
+
+Sans argument, la fonction `distinct()` renvoie une table purgée des lignes en double
+
+```{r}
+penguins %>% distinct() %>% head(5)
+```
+
+C'est l'équivalent de l'instruction SQL :
+
+```{r engine = "sql", cache = FALSE, eval = FALSE}
+SELECT DISTINCT * FROM penguins
+```
+
+
+
+## Le point sur les guillemets
+
+On ne met rien autour de notre paramètre lorsqu'on s'intéresse au *contenu* de celui-ci, à ce qui se cache derrière ce symbole (une fonction, une table, ...)
+
+Lorsqu'on ne veut pas que notre paramètre soit interprété comme un objet R, il faut l'encadrer par des quotes (simples : `'chaîne_de_caractères'` ou doubles : `"chaîne_de_caractères"`)
+
+```{r eval = FALSE}
+import("NAIS06.sas7bdat")
+```
+```{r eval = FALSE}
+import(NAIS06.sas7bdat) 
+```
+
+```{r echo = FALSE}
+tryCatch(import(NAIS06.sas7bdat), error = function(e) message(e$message))
+```
+
+Les quotes sont parfois optionnelles : par exemple, le comportement des fonctions `help()` et `library()` reste le même que l'on mette des quotes ou non
+
+Il existe par ailleurs des exceptions (évaluation non standard : NSE), où il **ne faut pas** mettre de quotes pour obtenir le bon résultat. Les fonctions du package **dplyr** en sont un bon exemple : les noms de colonnes doivent être laissés sans quotes. D'une certaine façon, **dplyr** considère que c'est le contenu de la colonne qui nous intéresse
+
+
+
+## Exercice
+
+1) Afficher le contenu de la 11ème observation de *penguins*
+
+2) Quel est le contenu de la variable *sex* de cette 11ème observation?
+
+3) Quelles sont les trois premières modalités différentes rencontrées pour la variable *body_mass_g*, les trois dernières?
+
+## Solution 
+
+```{r eval = TRUE}
+# 1
+penguins %>% head(11) %>% tail(1)
+# 2
+penguins %>% head(11) %>% tail(1) %>% select(sex)
+# 3
+penguins %>% distinct(body_mass_g) %>% head(3)
+penguins %>% distinct(body_mass_g) %>% tail(3)
