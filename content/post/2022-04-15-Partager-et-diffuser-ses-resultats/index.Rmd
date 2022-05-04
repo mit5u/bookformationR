@@ -1,0 +1,56 @@
+---
+title: "Partager et diffuser ses résultats"
+author: "Jocelyn Béziau"
+date: 2022-04-15
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(dbplyr)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## RMarkdown
+
+Dans RStudio, cliquer sur `"File" > "New File" > "RMarkdown..."` ou `"R Notebook"` (le R Notebook étant un RMarkdown enrichi).
+
+On pourra ensuite partager le document avec des collègues, un chef de projet, un stagiaire, ... afin qu'ils puissent consulter les résultats, reproduire l'analyse ou l'adapter pour leur propre compte.
+
+Le corps d'un document RMarkdown se compose de trois types de contenus : du code, des sorties, des commentaires.
+
+* les blocs de code permettent d'importer nos packages, de travailler nos données et de produire des analyses reproductibles comme le ferait un script R
+* les sorties sont générées par les blocs de code et placées chacune à la suite de celui qui les génère
+* les commentaires sont du texte rédigé dans le formalisme Markdown, en dehors des blocs de code
+
+Les blocs de code sont ajoutés avec le raccourci clavier `CTRL + ALT + I` (ou à la main avec trois accents graves avant et après le code).
+
+Ce corps est précédé d'une en-tête (YAML) pour le format d'export et la titraille. On peut y ajouter des éléments dynamiques comme la date de compilation du document ou des paramètres utilisables par le code du corps du document (définis dans le champ `params:`, puis invocables dans les blocs de code avec `params$`).
+
+Le document RMarkdown peut être tissé pour produire la sortie (selon les outputs définis dans l'en-tête) avec le raccourci `CTRL + MAJ + K` (ou le bouton `Knit` au-dessus du panneau de script dans RStudio)
+
+Aller plus loin : 
+
+* [Tutoriel RMarkdown par RStudio ](https://rmarkdown.rstudio.com/lesson-1.html) (en anglais)
+* [Exemples de documents, diaporamas et sites web statiques réalisés avec RMarkdown](https://rmarkdown.rstudio.com/gallery.html)
+
+## Shiny
+
+Package dédié au développement d'applications web interactives (dashboards, data viz, ...)
+
+Voir la [gallerie](https://shiny.rstudio.com/gallery/)
+
+Il existe une formation Insee dédiée à Shiny

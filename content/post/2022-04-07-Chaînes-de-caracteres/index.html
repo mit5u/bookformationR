@@ -1,0 +1,91 @@
+---
+title: "Chaînes de caractères"
+author: "Jocelyn Béziau"
+date: 2022-04-07
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="aide-mémoire" class="section level2">
+<h2>Aide-mémoire</h2>
+<table>
+<colgroup>
+<col width="42%" />
+<col width="57%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Cas d’utilisation</strong></th>
+<th><strong>Fonction</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Concaténation</td>
+<td>paste0(str<sub>1</sub>,str<sub>2</sub>,str<sub>3</sub>)</td>
+</tr>
+<tr class="even">
+<td>Nombre de caractères</td>
+<td>str_length(str)</td>
+</tr>
+<tr class="odd">
+<td>Extraction d’une sous-chaîne</td>
+<td>str_sub(str, pos, pos+len-1)</td>
+</tr>
+<tr class="even">
+<td>Extraction de la fin</td>
+<td>str_sub(str, pos)</td>
+</tr>
+<tr class="odd">
+<td>Remplacement de la fin</td>
+<td>str_sub(var, pos) &lt;- new_chaine</td>
+</tr>
+<tr class="even">
+<td>Réduction des espaces</td>
+<td>str_squish(str)</td>
+</tr>
+<tr class="odd">
+<td>Elimination des espaces en fin</td>
+<td>str_trim(str, side = “right”)</td>
+</tr>
+<tr class="even">
+<td>Elimination des espaces en debut</td>
+<td>str_trim(str, side = “left”)</td>
+</tr>
+<tr class="odd">
+<td>Mise en majuscules</td>
+<td>str_to_upper(str)</td>
+</tr>
+<tr class="even">
+<td>Mise en minuscules</td>
+<td>str_to_lower(str)</td>
+</tr>
+<tr class="odd">
+<td>Remplacement de caractères</td>
+<td>str_replace_all(old, new, str)</td>
+</tr>
+<tr class="even">
+<td>Recherche d’un motif</td>
+<td>str_locate(str,str<sub>2</sub>)</td>
+</tr>
+<tr class="odd">
+<td>”</td>
+<td>str_detect(str,str<sub>2</sub>)</td>
+</tr>
+<tr class="even">
+<td>”</td>
+<td>str_extract(str,str<sub>2</sub>)</td>
+</tr>
+<tr class="odd">
+<td>Retournement</td>
+<td>stri_reverse(str)</td>
+</tr>
+<tr class="even">
+<td>Distance</td>
+<td>stringdist(str,str<sub>2</sub>)</td>
+</tr>
+</tbody>
+</table>
+</div>

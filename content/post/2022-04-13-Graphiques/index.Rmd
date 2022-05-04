@@ -1,0 +1,300 @@
+---
+title: "Graphiques"
+author: "Jocelyn Béziau"
+date: 2022-04-13
+categories: ["R", "ggplot"]
+tags: ["R", "ggplot", "graphiques", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+library(ggformula)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Galerie
+
+[Quelques exemples...](https://r-graph-gallery.com/)
+
+## Les graphiques avec R
+
+Il est possible de créer des graphiques de différentes manières avec R :  
+- en utilisant les fonctions de base,
+- en utilisant le package **ggplot2**, qui offre une grammaire cohérente pour les différents types de graphiques possibles,
+- en utilisant d'autres packages existant comme **lattice**, **ggvis** ou **htmlwidgets**...
+
+On fait le choix ici d'utiliser le package **ggformula**, qui offre une interface au package **ggplot2**. Le package **ggformula** permet de créer un graphique en utilisant des **formules** plutôt que d'utiliser les fonctions spécifiques de **ggplot2**.
+
+
+## ggplot2
+**ggplot2** est un package écrit par Hadley Wickham et qui s'appuie sur une grammaire unique permettant de décrire en détail une large gamme de graphiques.
+
+Cette grammaire comporte :  
+- Des données (data.frame et les variables utilisées)
+- Un système de coordonnées (par défaut, un repère cartésien)
+- Une fonction permettant de transformer les données en marqueurs visuels
+- Eventuellement des options.
+
+
+## ggformula
+**ggformula** est un package écrit par Danny Kaplan et Randall Pruim, qui offre une surcouche à **ggplot2**, permettant d'associer une syntaxe légère et une interface de type 'formulaire' à la puissance de **ggplot2**
+
+Par interface 'formulaire', on entend que les fonctions du package **ggformula** pour créer les graphiques seront de la forme  **objectif**(**y** ~ **x**, data = **mes_donnees**)
+
+Noter que, comme dans le package **tables**, la table en entrée n'est pas le premier paramètre : ceci provient de la possibilité d'utiliser uniquement des vecteurs dans la formule et de se passer de table de données.
+
+
+## Afficher la distribution d'une variable discrète : la fonction `gf_bar()`
+On va travailler sur la table *diamonds*, incluse dans le package **ggplot2**.  
+Pour cela, on va charger les librairies **dplyr**, **ggplot2** et **ggformula** (**dplyr** est optionnel mais permettra de vérifier que les graphiques sont corrects) et on va examiner la table *diamonds* :
+
+```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(ggformula)
+head(diamonds, n = 1)
+```
+
+Les fonctions de création de graphiques sont préfixées par *gf_*.  
+
+On va travailler sur la variable *cut* de la table *diamonds*, variable qualitative qui indique la qualité de la taille d'un diamant.
+
+Pour représenter une unique variable qualitative ou discrète, on va utiliser un **diagramme en barre**, défini par la fonction `gf_bar` et en utilisant la formule `~ cut` vu qu'il n'y a qu'une variable :
+
+```{r include = TRUE, echo = TRUE, warning = FALSE,message = FALSE, eval = FALSE}
+diamonds %>% 
+  gf_bar(~cut)
+```
+
+Le graphique obtenu doit correspondre aux résultats d'un tableau de comptage :
+
+```{r}
+diamonds %>% 
+  select(cut) %>% 
+  table()
+```
+
+```{r gf_bar, echo = FALSE}
+diamonds %>% 
+  gf_bar(~cut)
+```
+
+
+## Afficher la distribution d'une variable continue (1/2) : la fonction `gf_histogram`
+On va s'intéresser à la variable *price* de la table *diamonds*, variable quantitative continue donnant le prix en dollars d'un diamant.  
+
+On va utiliser un **histogramme**, défini par la fonction `gf_histogram` :
+
+```{r}
+diamonds %>% 
+  gf_histogram(~price)
+```
+
+## Afficher la distribution d'une variable continue (2/2) : la fonction `gf_dens`
+On peut aussi représenter la distribution (ou densité) lissée de la variable, définie par la fonction `gf_dens`.  
+
+Attention ! Dans ce cas, R fait une estimation par noyau de la densité de probabilité. Il faut donc s'assurer de bien savoir ce que R fait et comment bien gérer les paramètres.
+
+```{r echo = TRUE, eval = TRUE}
+diamonds %>% 
+  gf_dens(~price)
+```
+
+## Afficher un nuage de points : la fonction `gf_point`
+On va s'intéresser aux variables *price* et *carat* de la table *diamonds*.  
+
+On va utiliser un **nuage de points**, défini par la fonction `gf_point` :
+
+```{r echo = TRUE}
+diamonds %>% 
+  gf_point(carat ~ price)
+```
+
+La variable à droite du tilde `~` définit les abscisses, la variable à gauche les ordonnées
+
+## Afficher les distributions d'un ensemble de variables continues (1/2) : la fonction `gf_boxplot`
+<p>On va s'intéresser à la variable *price* en fonction des modalités de *cut*, de la table *diamonds*.  
+On peut utiliser une **boîte à moustache** ou box-plot, définie par la fonction `gf_boxplot` :<p>
+```{r eval = TRUE}
+diamonds %>% 
+  gf_boxplot(carat ~ cut)
+```
+
+**Attention** : la variable à droite du tilde est la variable discrète.
+
+## Afficher les distributions d'un ensemble de variables continues (1/2) : la fonction `gf_violin`
+On peut également utiliser une représentation en violon, qui illustre une estimation lissée de la distribution des variables.  
+
+**Attention** : les mêmes précautions que pour la représentation de la densité s'appliquent.
+
+```{r eval = TRUE}
+diamonds %>% 
+  gf_violin(carat ~ cut)
+```
+Les résultats devront être compatibles avec ce qu'on peut trouver en calculant la moyenne par modalité discrète
+```{r}
+diamonds %>% 
+  group_by(cut) %>% 
+  summarise(avg = mean(price))
+```
+
+## Représentation d'une série chronologique
+On va maintenant utiliser la table *economics* et les variables *date* et *unemploy*. 
+
+On veut illustrer l'évolution du nombre de chômeurs au cours du temps.
+```{r}
+head(economics, n = 3)
+```
+```{r eval = TRUE}
+economics %>% 
+  gf_line(unemploy ~ date)
+```
+
+## Jouer avec le thème
+Le thème permet d'utiliser un ensemble d'options graphiques pré-définies en une seule commande. Le package **ggformula** offre un certain nombre de thèmes de base, mais il est possible de définir les siens. Ce dernier point est en dehors du périmètre de cette formation.
+
+```{r eval = FALSE}
+library(ggformula)
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_bw()) # fond blanc, quadrillage gris
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_gray()) # fond gris, quadrillage blanc
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_dark()) # fond gris, quadrillage gris foncé
+diamonds %>% gf_bar(~cut) %>% gf_theme(theme_minimal()) # fond blanc, quadrillage gris, axes non affichés
+```
+
+```{r}
+library(ggformula)
+diamonds %>% 
+  gf_bar(~cut) %>% 
+  gf_theme(theme_dark())
+```
+
+
+## Jouer avec les formes et les couleurs
+Reprenons la table *economics* et l'évolution du nombre de chômeurs.
+
+```{r eval = FALSE}
+economics %>% 
+  gf_area(unemploy ~ date)
+```
+
+----
+
+On peut modifier les couleurs sans ajouter d'information.
+
+```{r eval = TRUE}
+economics %>% 
+  gf_area(unemploy ~ date, colour = 'black', fill = 'blue', alpha = 0.1)
+```
+
+- colour : couleur du contour
+- fill : couleur de l'aire intérieure
+- alpha : transparence de l'aire intérieure (entre 0 et 1)
+
+----
+
+On peut également modifier les couleurs en ajoutant de l'information.  
+
+Reprenons la table *diamonds*, en utilisant uniquement 500 observations pour des questions de lisibilité. On considère les variables *price* et *carat*.
+
+```{r eval = FALSE}
+diamonds %>% 
+  sample_n(size = 500)
+```
+
+On a déjà défini les coordonnées x et y par *price* et *carat*. On peut ajouter une information supplémentaire avec la variable *cut*. On spécifie que la couleur est une variable en ajoutant un tilde devant.
+
+```{r eval = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, colour = ~cut)
+```
+
+----
+
+On peut aussi faire varier la forme des points.
+```{r eval = FALSE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, shape = ~cut)
+```
+
+Ou même les deux, si on utilise une quatrième variable, la variable *color*.
+```{r eval = TRUE, warning = FALSE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price, 
+           colour = ~color,
+           shape = ~cut)
+```
+
+
+## La fonction `gf_labs` : changer le titre
+On peut modifier le titre d'un graphique avec la fonction `gf_labs` :
+
+```{r}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_labs(title = "Lien entre prix et carat des diamants")
+```
+
+## La fonction `gf_labs` : changer le nom des axes
+On peut modifier le nom des axes :
+```{r}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_labs(x = "Prix en dollars",
+          y = "Taille en carat")
+```
+
+## Changer les limites des axes : la fonction `gf_lims`
+On peut modifier l'intervalle des axes, pour des variables continues :
+
+```{r warning = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_lims(x = c(10000, 20000),
+          y = c(1,2))
+```
+
+Certaines observations sont en dehors de la fenêtre représentée sur le graphique : R ne les affiche pas, mais nous prévient qu'il manque des observations sur le graphique.
+
+## La fonction `gf_refine` : changer les graduations des axes
+On peut modifier les graduations d'une variable continue avec les fonctions `gf_refine` et `scale_x_continuous`  ou `scale_y_continuous` :
+```{r eval = TRUE}
+diamonds %>% 
+  sample_n(size = 500) %>% 
+  gf_point(carat ~ price) %>%
+  gf_refine(scale_x_continuous(breaks = c(0,9000,18000)))
+```
+
+## La fonction `gf_refine` : changer l'ordre des modalités des axes
+On peut également modifier l'ordre des modalités quand on travaille sur une variable discrète, avec `scale_x_discrete` ou `scale_y_discrete` et l'argument `limits` :
+
+```{r eval = TRUE}
+diamonds %>% 
+  gf_bar(~ cut) %>%
+  gf_refine(scale_x_discrete(limits = c("Ideal", "Premium", "Very Good", "Good", "Fair")))
+```
+
+## La fonction `gf_refine` : changer le nom des modalités des axes
+On peut modifier les noms des modalités avec l'argument `labels` :
+```{r eval = TRUE}
+diamonds %>% 
+  gf_bar(~ cut) %>%
+  gf_refine(scale_x_discrete(labels = c("Juste", "Bon", "Très bon", "Premier choix", "Idéal")))
+```

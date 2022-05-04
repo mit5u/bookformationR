@@ -1,0 +1,119 @@
+---
+title: "Statistiques par modalités"
+author: "Jocelyn Béziau"
+date: 2022-04-06
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="regrouper-selon-une-catégorie-group_by" class="section level2">
+<h2>Regrouper selon une catégorie : <code>group_by()</code></h2>
+<p>Nous avons compté le nombre de naissances en France entière. Maintenant, nous souhaitons avoir une répartition par région.</p>
+<p>On peut simplement indiquer la variable de regroupement en paramètre de <code>count()</code>.
+Mais cela n’est possible que pour un comptage simple.</p>
+<pre class="r"><code># tout simplement :
+tab_naissances %&gt;% count(regnais)
+
+# ou bien :
+tab_naissances %&gt;% 
+    summarise(nombre_naissances = n())</code></pre>
+<ul>
+<li><p>Lorsqu’on utilise un regroupement, on perd toutes les variables détail, ne restent que la ou les variables de regroupement et les calculs.</p></li>
+<li><p>Pour faire des statistiques sur modalités croisées, il suffit de mettre plusieurs variables de regroupement.</p></li>
+</ul>
+<pre class="r"><code>tab_naissances %&gt;% 
+  group_by(regnais, sexe) %&gt;% 
+  summarise(nombre_naissances = n())</code></pre>
+</div>
+<div id="entre-filter-et-summarise" class="section level2">
+<h2>Entre <code>filter()</code> et <code>summarise()</code></h2>
+<p>Il est possible de filtrer sur une condition impliquant une statistique, en redescendant le résultat d’un calcul sur un groupe de lignes au niveau de chacune des lignes. Par exemple pour sélectionner les communes ayant la plus forte population de leur département :</p>
+<pre class="r"><code>p &lt;- import(&quot;donnees/support/poplegale_6815.sas7bdat&quot;)
+p %&gt;% group_by(D) %&gt;% 
+    filter(PMUN15 == max(PMUN15))</code></pre>
+<p>Question : Pourquoi uniquement 11 départements (la table initiale contient 98 départements) ?</p>
+<hr />
+<!--Réponse : Le maximum d'un vecteur contenant des valeurs manquantes... est une valeur manquante. Ainsi, tous les départements pour lesquels au moins une commune n'a pas de valeur renseignée pour `PMUN15` ont leur maximum à `NA`. La comparaison entre cette valeur et la population de chaque commune renvoie alors `NA` et non `TRUE`. Ces départements ne sont donc pas inclus dans le résultat de `filter()`.-->
+<pre class="r"><code>p %&gt;% group_by(D) %&gt;% 
+    summarise(pmax = max(PMUN15)) %&gt;%
+    arrange(desc(pmax)) %&gt;% 
+    head(15)</code></pre>
+<p>Pour obtenir le maximum parmi les valeurs renseignées, on peut utiliser l’argument <code>na.rm = TRUE</code> dans la fonction <code>max()</code> :</p>
+<pre class="r"><code>p %&gt;% group_by(D) %&gt;% 
+    summarise(pmax = max(PMUN15, na.rm = TRUE)) %&gt;%
+    arrange(desc(pmax)) %&gt;% 
+    head(15)</code></pre>
+</div>
+<div id="entre-mutate-et-summarise" class="section level2">
+<h2>Entre <code>mutate()</code> et <code>summarise()</code></h2>
+<p>Il est possible de créer une nouvelle colonne impliquant une statistique, en redescendant le résultat d’un calcul fait sur un groupe de lignes au niveau de chacune des lignes du groupe :</p>
+<pre class="r"><code>p %&gt;% group_by(D) %&gt;%
+    mutate (PMUN15max = max(PMUN15, na.rm = TRUE))</code></pre>
+</div>
+<div id="tris-arrange" class="section level2">
+<h2>Tris : <code>arrange()</code></h2>
+<p>Lorsqu’on utilise un regroupement, le résultat est trié en majeur selon ce regroupement.</p>
+<p>Si on souhaite effectuer un autre tri, on utilise la fonction <code>arrange()</code>.</p>
+<pre class="r"><code>tab_naissances %&gt;% 
+    group_by(regnais) %&gt;%                     # Par région...
+    summarise(nombre_naissances = n()) %&gt;%    # on calcule le nombre de naissances
+    arrange(nombre_naissances)                # et on trie le tout par ordre croissant des naissances</code></pre>
+</div>
+<div id="accéder-à-une-ligne-particulière-dun-groupe-row_number" class="section level2">
+<h2>Accéder à une ligne particulière d’un groupe : <code>row_number()</code></h2>
+<p>A l’intérieur de chaque groupe, le numéro d’ordre de la ligne/observation est accessible par la fonction <code>row_number</code> de <strong>dplyr</strong> :</p>
+<pre class="r"><code>poplegale_6815 %&gt;%                     
+    group_by(D) %&gt;%                           # Par département
+    arrange(desc(PMUN15)) %&gt;%                 #   on range par ordre décroissant, au sein de chaque département
+    filter(row_number() ==  1)                   # on ne garde que la première commune</code></pre>
+</div>
+<div id="la-fonction-ungroup" class="section level2">
+<h2>La fonction <code>ungroup()</code></h2>
+<p>Le regroupement de modalités par <code>group_by()</code> produit une table qui a en attribut la liste des variables de regroupement. Lorsqu’il y en a plusieurs, la fonction <code>summarise()</code> n’enlève que la dernière variable : la table produite reste groupée sur les premières variables.</p>
+<pre class="r"><code>tab_naissances %&gt;%                     
+  group_by(regnais, depnais) %&gt;%            # Par département (et région pour garder celle ci)
+  summarise(nombre_naissances = n()) -&gt; a   # on calcule le nombre de naissances
+                                            # et on sauve dans &#39;a&#39;
+a %&gt;%
+  filter(nombre_naissances == max(nombre_naissances))   </code></pre>
+<p>Et on récupère le département ayant le plus grand nombre de naissances, dans chaque région.</p>
+<p>Pour supprimer l’ensemble des regroupements, utiliser <code>ungroup()</code>. Pour le département qui a le plus de naissances, France entière :</p>
+<pre class="r"><code>a %&gt;%                     
+  ungroup() %&gt;%                               
+  filter(nombre_naissances == max(nombre_naissances))   </code></pre>
+</div>
+<div id="exercice" class="section level2">
+<h2>Exercice</h2>
+<ol style="list-style-type: decimal">
+<li><p>Calculer le nombre de naissances par département. Quel est le département qui a le plus de naissances?</p></li>
+<li><p>Calculer le nombre de naissances par commune. Par département, quelles sont les communes qui ont le plus de naissances ?</p></li>
+<li><p>Calculer le nombre de naissances par jour de la semaine. En recodant le jour de la semaine, réordonner les résultats (lundi le 1er, mardi le 2ème…)</p></li>
+</ol>
+</div>
+<div id="solution-de-lexercice-12" class="section level2">
+<h2>Solution de l’exercice (1/2)</h2>
+<pre class="r"><code>tab_naissances %&gt;%
+    group_by(depnais) %&gt;% 
+    summarise(n = n()) %&gt;%
+    filter(n == max(n))
+
+tab_naissances %&gt;% 
+    group_by(depnais, comnais) %&gt;%
+    summarise(n = n()) %&gt;%
+    filter(n == max(n))</code></pre>
+</div>
+<div id="solution-de-lexercice-22" class="section level2">
+<h2>Solution de l’exercice (2/2)</h2>
+<pre class="r"><code>tab_naissances %&gt;% 
+    mutate(j = case_when(jsemaine == &quot;lundi&quot;    ~ 1,
+                         jsemaine == &quot;mardi&quot;    ~ 2,
+                         jsemaine == &quot;mercredi&quot; ~ 3,
+                         jsemaine == &quot;jeudi&quot;    ~ 4,
+                         jsemaine == &quot;vendredi&quot; ~ 5,
+                         jsemaine == &quot;samedi&quot;   ~ 6,
+                         jsemaine == &quot;dimanche&quot; ~ 7)) %&gt;%
+    group_by(j, jsemaine) %&gt;% 
+    summarise(n = n())</code></pre>
+</div>

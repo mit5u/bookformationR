@@ -1,0 +1,155 @@
+---
+title: "Compléments - Graphiques"
+author: "Jocelyn Béziau"
+date: 2022-04-17
+categories: ["R", "tidyverse"]
+tags: ["R", "tidyverse", "formation", "intro"]
+---
+    
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, eval = TRUE)
+options(scipen=999)  # turn-off scientific notation like 1e+48
+library(ggplot2)
+library(ggthemes)
+theme_set(theme_bw())  # pre-set the bw theme.
+data("midwest", package = "ggplot2")
+```
+   
+# Exemples de graphiques
+
+## Nuage de points
+
+```{r}
+gg <- ggplot(midwest, aes(x=area, y=poptotal)) + 
+    geom_point(aes(col=state, size=popdensity)) + 
+    geom_smooth(method="loess", se=F) + 
+    xlim(c(0, 0.1)) +
+    ylim(c(0, 500000)) +
+    labs(subtitle="Area Vs Population", 
+         y="Population", 
+         x="Area",
+         title="Scatterplot", 
+         caption = "Source: midwest")
+
+plot(gg)
+```
+
+
+## Bubble plot animé
+
+<!--A faire fonctionner... et données à changer -> (pas trop d'idée)
+(voir https://gganimate.com/)-->
+
+```{r eval = FALSE}
+library(gganimate)
+library(gapminder)
+
+# ~20 secondes pour faire le graphique animé
+gm_le <- ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year) +
+  ease_aes('linear')
+
+anim_save("gm_le.gif", gm_le)
+```
+
+## Barres divergentes
+
+<!--données à changer ->  évolution des secteurs d'activité durant la crise Covid ?
+
+(à partir des données de https://www.insee.fr/fr/statistiques/5017251?sommaire=5017369)-->
+
+```{r}
+data("mtcars") 
+mtcars$`car name` <- rownames(mtcars)
+mtcars$mpg_z <- round((mtcars$mpg - mean(mtcars$mpg))/sd(mtcars$mpg), 2)  # compute normalized mpg
+mtcars$mpg_type <- ifelse(mtcars$mpg_z < 0, "below", "above")  # above / below avg flag
+mtcars <- mtcars[order(mtcars$mpg_z), ]  # sort
+mtcars$`car name` <- factor(mtcars$`car name`, levels = mtcars$`car name`)  # convert to factor to retain sorted order in plot.
+```
+
+```{r}
+ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
+    geom_bar(stat='identity', aes(fill=mpg_type), width=.5)  +
+    scale_fill_manual(name="Mileage", 
+                      labels = c("Above Average", "Below Average"), 
+                      values = c("above"="#00ba38", "below"="#f8766d")) + 
+    labs(subtitle="Normalised mileage from 'mtcars'", 
+         title= "Diverging Bars") + 
+    coord_flip()
+```
+
+## Histogramme empilé
+
+```{r}
+g <- ggplot(mpg, aes(manufacturer))
+g + geom_bar(aes(fill=class), width = 0.5) + 
+    theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+    labs(title="Histogram on Categorical Variable", 
+         subtitle="Manufacturer across Vehicle Classes") 
+```
+## Pyramide de population
+
+<!--données à changer : pyramide des âges Insee-->
+
+```{r}
+email_campaign_funnel <- read.csv("https://raw.githubusercontent.com/selva86/datasets/master/email_campaign_funnel.csv")
+
+brks <- seq(-15000000, 15000000, 5000000)
+lbls = paste0(as.character(c(seq(15, 0, -5), seq(5, 15, 5))), "m")
+```
+
+```{r}
+ggplot(email_campaign_funnel, aes(x = Stage, y = Users, fill = Gender)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="Email Campaign Funnel") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5), 
+          axis.ticks = element_blank()) +   # Centre plot title
+    scale_fill_brewer(palette = "Dark2")  # Color palette
+```
+
+## Classification 
+
+```{r}
+library(ggalt)
+library(ggfortify)
+
+
+# ACP
+df <- iris[c(1, 2, 3, 4)]
+pca_mod <- prcomp(df)
+
+df_pc <- data.frame(pca_mod$x, Species=iris$Species)  # dataframe of principal components
+df_pc_vir <- df_pc[df_pc$Species == "virginica", ]  # df for 'virginica'
+df_pc_set <- df_pc[df_pc$Species == "setosa", ]  # df for 'setosa'
+df_pc_ver <- df_pc[df_pc$Species == "versicolor", ]  # df for 'versicolor'
+
+```
+
+```{r} 
+ggplot(df_pc, aes(PC1, PC2, col=Species)) + 
+    geom_point(aes(shape=Species), size=2) +   # draw points
+    labs(title="Iris Clustering", 
+         subtitle="With principal components PC1 and PC2 as X and Y axis",
+         caption="Source: Iris") + 
+    coord_cartesian(xlim = 1.2 * c(min(df_pc$PC1), max(df_pc$PC1)), 
+                    ylim = 1.2 * c(min(df_pc$PC2), max(df_pc$PC2))) +   # change axis limits
+    geom_encircle(data = df_pc_vir, aes(x=PC1, y=PC2)) +   # draw circles
+    geom_encircle(data = df_pc_set, aes(x=PC1, y=PC2)) + 
+    geom_encircle(data = df_pc_ver, aes(x=PC1, y=PC2))
+```
+
+## Voir aussi
+
+* [La page d'origine](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
+

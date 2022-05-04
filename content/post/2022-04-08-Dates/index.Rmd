@@ -1,0 +1,105 @@
+---
+title: "Travailler avec les dates"
+author: "Jocelyn Béziau"
+date: 2022-04-08
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+library(lubridate)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+## Problématique
+
+Utiliser R pour travailler sur des données datées (annuelles, trimestrielles, journalières, ...) peut se faire de différentes façons, l'une d'entre elles est le package **lubridate**
+
+```{r message = FALSE}
+library(lubridate)
+```
+
+Notre jeu d'exemple : ce fichier fictif d'emploi par département
+```{r}
+fichier_date <- readRDS("donnees/support/fichier_date.RDS")
+fichier_date
+```
+
+## Transformer une chaîne de caractères en date
+
+Pour convertir en Date une chaîne de caractères, on peut essayer `as_date()`, mais si le format de la chaîne de caractères n'est pas standard, elle peut ne pas être reconnue. Des fonctions ad hoc comme `ydm()` et `ymd()` existent pour traduire les formats (année/jour/mois) et (année/mois/jour) respectivement
+
+```{r}
+fichier_date <- fichier_date %>% mutate(Date = ymd(Date_string))
+fichier_date %>% head
+```
+
+Selon le format, d'autres commandes existent. Citons en particulier les deux commandes suivantes. 
+
+Si la chaîne de caractères est de la forme "23/02/2022", on peut utiliser `dmy()`.
+
+Si la chaîne de caractères est "2020 T3", pour le troisième trimestre de 2020, on peut utiliser `yq`.
+```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE}
+yq("2020 T3")
+```
+## Extraire des composants de la date
+
+Exemple :
+```{r}
+fichier_date %>% mutate(
+  Annee = year(Date),
+  Trimestre = quarter(Date),
+  Mois = month(Date),
+  Jour = day(Date)
+) %>% as.data.frame %>% head
+```
+
+## Filtrer une plage de dates
+
+```{r}
+date_debut <- ymd("2011-05-01")
+date_fin <- ymd("2013-01-03")
+intervalle <- interval(date_debut, date_fin)
+
+fichier_date %>% filter(Date %within% intervalle)
+```
+## Exercice
+
+* Calculer l'effectif national par trimestre dans `fichier_dates`
+* Calculer ensuite l'évolution trimestrielle de l'emploi
+
+
+## Solution de l'exercice
+
+```{r}
+fichier_date <- readRDS("donnees/support/fichier_date.RDS")
+
+fichier_date %>% 
+  mutate(Date = ymd(Date_string)) %>%
+  mutate(Annee = year(Date),
+         Trimestre = quarter(Date)) %>%
+  group_by(Annee, Trimestre) %>%
+  summarise(Effectif_random = sum(Effectif_random)) %>%
+  ungroup() %>%
+  # head() # effectif national par trimestre
+  arrange(Annee, Trimestre) %>%
+  mutate(Evol_trim = 100*(Effectif_random - lag(Effectif_random))/
+                             lag(Effectif_random)) %>% 
+  head() # évolution relative de l'emploi de trimestre en trimestre
+```
+
+

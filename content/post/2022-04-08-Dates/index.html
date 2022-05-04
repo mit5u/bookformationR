@@ -1,0 +1,70 @@
+---
+title: "Travailler avec les dates"
+author: "Jocelyn Béziau"
+date: 2022-04-08
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="problématique" class="section level2">
+<h2>Problématique</h2>
+<p>Utiliser R pour travailler sur des données datées (annuelles, trimestrielles, journalières, …) peut se faire de différentes façons, l’une d’entre elles est le package <strong>lubridate</strong></p>
+<pre class="r"><code>library(lubridate)</code></pre>
+<p>Notre jeu d’exemple : ce fichier fictif d’emploi par département</p>
+<pre class="r"><code>fichier_date &lt;- readRDS(&quot;donnees/support/fichier_date.RDS&quot;)
+fichier_date</code></pre>
+</div>
+<div id="transformer-une-chaîne-de-caractères-en-date" class="section level2">
+<h2>Transformer une chaîne de caractères en date</h2>
+<p>Pour convertir en Date une chaîne de caractères, on peut essayer <code>as_date()</code>, mais si le format de la chaîne de caractères n’est pas standard, elle peut ne pas être reconnue. Des fonctions ad hoc comme <code>ydm()</code> et <code>ymd()</code> existent pour traduire les formats (année/jour/mois) et (année/mois/jour) respectivement</p>
+<pre class="r"><code>fichier_date &lt;- fichier_date %&gt;% mutate(Date = ymd(Date_string))
+fichier_date %&gt;% head</code></pre>
+<p>Selon le format, d’autres commandes existent. Citons en particulier les deux commandes suivantes.</p>
+<p>Si la chaîne de caractères est de la forme “23/02/2022”, on peut utiliser <code>dmy()</code>.</p>
+<p>Si la chaîne de caractères est “2020 T3”, pour le troisième trimestre de 2020, on peut utiliser <code>yq</code>.</p>
+<pre class="r"><code>yq(&quot;2020 T3&quot;)</code></pre>
+</div>
+<div id="extraire-des-composants-de-la-date" class="section level2">
+<h2>Extraire des composants de la date</h2>
+<p>Exemple :</p>
+<pre class="r"><code>fichier_date %&gt;% mutate(
+  Annee = year(Date),
+  Trimestre = quarter(Date),
+  Mois = month(Date),
+  Jour = day(Date)
+) %&gt;% as.data.frame %&gt;% head</code></pre>
+</div>
+<div id="filtrer-une-plage-de-dates" class="section level2">
+<h2>Filtrer une plage de dates</h2>
+<pre class="r"><code>date_debut &lt;- ymd(&quot;2011-05-01&quot;)
+date_fin &lt;- ymd(&quot;2013-01-03&quot;)
+intervalle &lt;- interval(date_debut, date_fin)
+
+fichier_date %&gt;% filter(Date %within% intervalle)</code></pre>
+</div>
+<div id="exercice" class="section level2">
+<h2>Exercice</h2>
+<ul>
+<li>Calculer l’effectif national par trimestre dans <code>fichier_dates</code></li>
+<li>Calculer ensuite l’évolution trimestrielle de l’emploi</li>
+</ul>
+</div>
+<div id="solution-de-lexercice" class="section level2">
+<h2>Solution de l’exercice</h2>
+<pre class="r"><code>fichier_date &lt;- readRDS(&quot;donnees/support/fichier_date.RDS&quot;)
+
+fichier_date %&gt;% 
+  mutate(Date = ymd(Date_string)) %&gt;%
+  mutate(Annee = year(Date),
+         Trimestre = quarter(Date)) %&gt;%
+  group_by(Annee, Trimestre) %&gt;%
+  summarise(Effectif_random = sum(Effectif_random)) %&gt;%
+  ungroup() %&gt;%
+  # head() # effectif national par trimestre
+  arrange(Annee, Trimestre) %&gt;%
+  mutate(Evol_trim = 100*(Effectif_random - lag(Effectif_random))/
+                             lag(Effectif_random)) %&gt;% 
+  head() # évolution relative de l&#39;emploi de trimestre en trimestre</code></pre>
+</div>

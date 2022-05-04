@@ -1,0 +1,75 @@
+---
+title: "Travailler en R"
+author: "Jocelyn Béziau"
+date: 2022-04-01
+categories: ["R", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="principes-généraux" class="section level2">
+<h2>Principes généraux</h2>
+<p>R est un langage de programmation complet</p>
+<ul>
+<li>scientifique</li>
+<li>multi-paradigme</li>
+<li>programmable</li>
+</ul>
+<p>R est constitué d’un noyau constitué d’opérations de base et de fonctions travaillant généralement en RAM</p>
+<p>On peut le complèter par des “packages”, bibliothèques de fonctions à charger en tant que de besoin</p>
+<ul>
+<li>des domaines d’application variés (stats, graphiques, SGBD, sites interactifs, …)</li>
+<li>complexité, efficacité et documentation hétérogènes</li>
+<li>grand nombre d’auteurs : pas de logique d’ensemble, recouvrements, …</li>
+</ul>
+</div>
+<div id="nous-ne-sommes-pas-seuls-dans-lunivers" class="section level2">
+<h2>Nous ne sommes pas seuls dans l’univeRs</h2>
+<p>Une galaxie de 1.9^{4} packages, près de 3.23^{5} fonctions, pour :</p>
+<ul>
+<li>ajouter des fonctionnalités</li>
+<li>remplacer des parties du noyau par des alternatives plus efficaces ou ergonomiques</li>
+<li>interfacer R avec d’autres langages de programmation</li>
+</ul>
+<p><img src="images/galaxie.png" /></p>
+</div>
+<div id="travailler-avec-r-une-question-de-mémoire" class="section level2">
+<h2>Travailler avec R : une question de mémoire</h2>
+<p>En SAS, le mode de travail habituel consiste à <strong>appeler successivement des procédures</strong>, qui prennent chacune <strong>en entrée des fichiers de données</strong> pour produire <strong>des fichiers de données en sortie</strong>. Ce qui se passe entre les deux est paramétré par l’utilisateur mais est assimilable à une boîte noire.</p>
+<p>À l’inverse, R donne un maximum de contrôle sur la façon de traiter les données, qui sont des objets chargés en mémoire (RAM) et non des fichiers stockés sur le disque.</p>
+<p>La taille de la mémoire disponible peut donc devenir décisive pour les traitements.</p>
+<div id="à-linsee-trois-environnements-peuvent-être-mobilisés" class="section level3">
+<h3>À L’Insee, trois environnements peuvent être mobilisés</h3>
+<ul>
+<li>Le poste de travail individuel</li>
+<li>AUS (accès aux données sécurisées)</li>
+<li>Le <a href="https://www.sspcloud.fr/">SSPCloud</a></li>
+</ul>
+</div>
+</div>
+<div id="linterface-de-base-rgui" class="section level2">
+<h2>L’interface de base : RGui</h2>
+<p>Quoique minimaliste, cette interface permet d’utiliser toute la puissance du langage R</p>
+<p><img src="images/rgui.png" /></p>
+</div>
+<div id="lenvironnement-de-développement-rstudio" class="section level2">
+<h2>L’environnement de développement : Rstudio</h2>
+<p>Cette interface facilite la vie du statisticien et du développeur
+C’est dans cet environnement que nous allons principalement travailler</p>
+<p><img src="images/rstudio_v3.png" /></p>
+</div>
+<div id="prise-en-main-de-rstudio" class="section level2">
+<h2>Prise en main de RStudio</h2>
+<p>Utiliser la console pour obtenir le résultat de 6 fois 9</p>
+<p>Ouvrir une nouvelle fenêtre de script (<em>File &gt; New File &gt; R script</em> ou <em>CTRL + maj + N</em>) et y soumettre le même calcul (saisir le code, puis le sélectionner et cliquer sur le bouton <em>Run</em>)</p>
+</div>
+<div id="lenvironnement-tout-ce-qui-existe-est-un-objet" class="section level2">
+<h2>L’environnement : tout ce qui existe est un objet</h2>
+<p>Supprimer des objets de l’environnement</p>
+<p><img src="images/rstudio2.png" /></p>
+</div>
+<div id="linvite-de-commandes-tout-ce-qui-se-produit-est-un-appel-de-fonction" class="section level2">
+<h2>L’invite de commandes : tout ce qui se produit est un appel de fonction</h2>
+<p><img src="images/invite_commandes.png" /></p>
+</div>

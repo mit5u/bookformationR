@@ -1,0 +1,27 @@
+---
+title: "Import et Export"
+author: "Jocelyn Béziau"
+date: 2022-04-10
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="import" class="section level2">
+<h2>Import</h2>
+<p>Pour la plupart des formats de fichiers (xlsx, ods, csv, txt, sas7bdat, parquet, feather, …), on peut utiliser <code>rio::import("nom_du_fichier.extension")</code> pour en faire un objet R manipulable dans notre environnement.</p>
+<p>C’est une surcouche autour des fonctions d’import des packages ad hoc (<code>data.table::fread()</code> pour les csv, <code>readODS::read_ods()</code> pour les ods, …)</p>
+<!--arrow/disk.frame à la place de feather/fstplyr-->
+</div>
+<div id="export" class="section level2">
+<h2>Export</h2>
+<p>De façon symétrique, <code>rio::export(objetR, "nom_du_fichier.extension")</code> permet de sauver sur le disque un objet de l’environnement R, à partir des fonctions ad hoc appelées de façon transparente comme pour l’import.</p>
+</div>
+<div id="stockage-intermédiaire" class="section level2">
+<h2>Stockage intermédiaire</h2>
+<p><code>saveRDS(objetR, "nom_du_fichier.RDS")</code> pour sauver sur le disque un objet de l’environnement R</p>
+<p><code>readRDS("nom_du_fichier.RDS")</code> pour charger cet objet dans l’environnement par la suite. Attention, cela écrase sans préavis tout objet R pré-existant qui porte le même nom que l’objet chargé depuis le .RDS</p>
+<p><code>save(objetR1, objetR2, ..., file = "nom_du_fichier.RData")</code> pour sauvegarder plusieurs objets R dans un seul fichier</p>
+<p><code>load("nom_du_fichier.RData")</code> pour charger dans l’environnement tous les objets R contenus dans ce fichier. Attention, cela écrasera sans préavis tous les objets R pré-existants qui portent le même nom que l’un des objets chargés depuis le .RData</p>
+</div>

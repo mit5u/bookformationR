@@ -1,0 +1,100 @@
+---
+title: "Transposition"
+author: "Jocelyn Béziau"
+date: 2022-04-11
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+```{r init, message = FALSE, echo = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(tibble)
+library(rio)
+library(palmerpenguins)
+
+knitr::knit_hooks$set(optipng = knitr::hook_optipng)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, cache = TRUE)
+
+set.seed(42)
+options(width = 100, 
+        repos = "https://cran.rstudio.com/", 
+        scipen = 6
+        )
+
+```
+
+# Transposition : pivot_longer() et pivot_wider()
+
+Remarque : ces fonctions remplacent leurs ancêtres dépréciées `gather()` et `spread()` à partir de la version 1.0 du package **tidyr**
+
+Dans une table R, le contenu d'une cellule peut servir à définir un nom de variable, et vice-versa.
+
+Selon l'utilisation des données, on peut choisir alternativement entre ces représentations
+
+```{r eval = TRUE, echo = FALSE}
+Metro_x_Quarter <- tribble(
+  ~Metropole, ~Q1_2000, ~Q1_2002,	~Q1_2004,	~Q1_2006,
+  "Boston" ,	  148, 189, 234, 272,
+  "Phil"   ,	  150, 170,	180, 186,
+  "SanFran",  	111, 132, 164, 219
+)
+
+Metro_x_Quarter
+
+```
+
+Une ligne par ville, avec une colonne par date de référence, et dans les cellules l'indice du loyer correspondant : cette représentation est facilement lisible par un humain.
+
+Elle ne permet cependant pas de représenter directement l'évolution comparée des loyers au cours du temps : notamment, les fonctions de ggplot2 auront besoin d'une colonne contenant les différentes périodes de référence pour servir d'axe de temps.
+
+## Quand les noms de variables sont eux-mêmes des variables d'intérêt : `pivot_longer()`
+
+```{r eval = FALSE, echo = TRUE}
+pivot_longer(df,
+             cols = selection_des_colonnes_a_pivoter,
+             names_to = "nom_de_la_colonne_a_creer_depuis_les_noms_de_variables",
+             value_to = "nom_de_la_colonne_a_creer_depuis_les_cellules")
+
+```
+
+L'argument `cols` liste toutes les variables concernées par le pivot (toutes celles dont le nom contient une information variable, comme ici la date de référence, sont de bonnes candidates !)
+
+Les arguments `names_to` et `values_to` permettent de renseigner respectivement le nom de la colonne contenant l'ensemble des variables "transformées en valeurs" (ici, la période de référence), et le nom de la colonne contenant l'ensemble des valeurs correspondant (ici le prix du loyer par ville à chaque période de référence)
+
+```{r eval = TRUE, echo = TRUE}
+Metro_x_Quarter_long <- Metro_x_Quarter %>% 
+  pivot_longer(cols = -Metropole,
+               names_to = "Periode",
+               values_to = "Prix_loyer") %>% 
+  rename(Ville = Metropole)
+Metro_x_Quarter_long %>% head(4)
+
+```
+
+Cette représentation des données est cette fois adaptée pour réaliser le graphique qui nous intéresse
+
+```{r eval = TRUE, echo = FALSE}
+Metro_x_Quarter_long %>% ggplot() +
+  aes(x = Periode, y = Prix_loyer, 
+      group = Ville, 
+      color = Ville) +
+  geom_line()
+```
+
+## Quand on veut rendre plus "présentable" une table longue : `pivot_wider()`
+
+Si l'on a besoin de regrouper des cellules dans une colonne synthétique (généralement pour présenter le tableau à un lecteur humain, ou pour des fonctions qui requièrent un format particulier en entrée) :
+
+```{r echo = TRUE, eval = FALSE}
+pivot_wider(df,
+            names_from = column_to_pivot_into_new_column,
+            values_from =   column_with_measurement_values  )
+
+```
+
+Comme pour `pivot_longer()`, on retrouve des arguments `names_` et `values_`, mais cette fois dans l'autre sens (`from` au lieu de `to`). Cela illustre l'aspect réciproque de ces deux fonctions.
+
+## Pour aller plus loin
+
+* [Parcours de formation utilitR sur le SSPCloud](https://www.sspcloud.fr/formation?search=&path=%5B%22Documentation%20UtilitR%22%2C%22Manipuler%20des%20donn%C3%A9es%20avec%20R%22%5D)

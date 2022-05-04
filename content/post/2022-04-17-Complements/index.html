@@ -1,0 +1,142 @@
+---
+title: "Compléments - Graphiques"
+author: "Jocelyn Béziau"
+date: 2022-04-17
+categories: ["R", "tidyverse"]
+tags: ["R", "tidyverse", "formation", "intro"]
+---
+
+
+
+<div id="exemples-de-graphiques" class="section level1">
+<h1>Exemples de graphiques</h1>
+<div id="nuage-de-points" class="section level2">
+<h2>Nuage de points</h2>
+<pre class="r"><code>gg &lt;- ggplot(midwest, aes(x=area, y=poptotal)) + 
+    geom_point(aes(col=state, size=popdensity)) + 
+    geom_smooth(method=&quot;loess&quot;, se=F) + 
+    xlim(c(0, 0.1)) +
+    ylim(c(0, 500000)) +
+    labs(subtitle=&quot;Area Vs Population&quot;, 
+         y=&quot;Population&quot;, 
+         x=&quot;Area&quot;,
+         title=&quot;Scatterplot&quot;, 
+         caption = &quot;Source: midwest&quot;)
+
+plot(gg)
+## `geom_smooth()` using formula &#39;y ~ x&#39;
+## Warning: Removed 15 rows containing non-finite values (stat_smooth).
+## Warning: Removed 15 rows containing missing values (geom_point).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+</div>
+<div id="bubble-plot-animé" class="section level2">
+<h2>Bubble plot animé</h2>
+<!--A faire fonctionner... et données à changer -> (pas trop d'idée)
+(voir https://gganimate.com/)-->
+<pre class="r"><code>library(gganimate)
+library(gapminder)
+
+# ~20 secondes pour faire le graphique animé
+gm_le &lt;- ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~continent) +
+  # Here comes the gganimate specific bits
+  labs(title = &#39;Year: {frame_time}&#39;, x = &#39;GDP per capita&#39;, y = &#39;life expectancy&#39;) +
+  transition_time(year) +
+  ease_aes(&#39;linear&#39;)
+
+anim_save(&quot;gm_le.gif&quot;, gm_le)</code></pre>
+</div>
+<div id="barres-divergentes" class="section level2">
+<h2>Barres divergentes</h2>
+<!--données à changer ->  évolution des secteurs d'activité durant la crise Covid ?
+
+(à partir des données de https://www.insee.fr/fr/statistiques/5017251?sommaire=5017369)-->
+<pre class="r"><code>data(&quot;mtcars&quot;) 
+mtcars$`car name` &lt;- rownames(mtcars)
+mtcars$mpg_z &lt;- round((mtcars$mpg - mean(mtcars$mpg))/sd(mtcars$mpg), 2)  # compute normalized mpg
+mtcars$mpg_type &lt;- ifelse(mtcars$mpg_z &lt; 0, &quot;below&quot;, &quot;above&quot;)  # above / below avg flag
+mtcars &lt;- mtcars[order(mtcars$mpg_z), ]  # sort
+mtcars$`car name` &lt;- factor(mtcars$`car name`, levels = mtcars$`car name`)  # convert to factor to retain sorted order in plot.</code></pre>
+<pre class="r"><code>ggplot(mtcars, aes(x=`car name`, y=mpg_z, label=mpg_z)) + 
+    geom_bar(stat=&#39;identity&#39;, aes(fill=mpg_type), width=.5)  +
+    scale_fill_manual(name=&quot;Mileage&quot;, 
+                      labels = c(&quot;Above Average&quot;, &quot;Below Average&quot;), 
+                      values = c(&quot;above&quot;=&quot;#00ba38&quot;, &quot;below&quot;=&quot;#f8766d&quot;)) + 
+    labs(subtitle=&quot;Normalised mileage from &#39;mtcars&#39;&quot;, 
+         title= &quot;Diverging Bars&quot;) + 
+    coord_flip()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+<div id="histogramme-empilé" class="section level2">
+<h2>Histogramme empilé</h2>
+<pre class="r"><code>g &lt;- ggplot(mpg, aes(manufacturer))
+g + geom_bar(aes(fill=class), width = 0.5) + 
+    theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+    labs(title=&quot;Histogram on Categorical Variable&quot;, 
+         subtitle=&quot;Manufacturer across Vehicle Classes&quot;) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+## Pyramide de population</p>
+<!--données à changer : pyramide des âges Insee-->
+<pre class="r"><code>email_campaign_funnel &lt;- read.csv(&quot;https://raw.githubusercontent.com/selva86/datasets/master/email_campaign_funnel.csv&quot;)
+
+brks &lt;- seq(-15000000, 15000000, 5000000)
+lbls = paste0(as.character(c(seq(15, 0, -5), seq(5, 15, 5))), &quot;m&quot;)</code></pre>
+<pre class="r"><code>ggplot(email_campaign_funnel, aes(x = Stage, y = Users, fill = Gender)) +   # Fill column
+    geom_bar(stat = &quot;identity&quot;, width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title=&quot;Email Campaign Funnel&quot;) +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5), 
+          axis.ticks = element_blank()) +   # Centre plot title
+    scale_fill_brewer(palette = &quot;Dark2&quot;)  # Color palette</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="classification" class="section level2">
+<h2>Classification</h2>
+<pre class="r"><code>library(ggalt)
+## Registered S3 methods overwritten by &#39;ggalt&#39;:
+##   method                  from   
+##   grid.draw.absoluteGrob  ggplot2
+##   grobHeight.absoluteGrob ggplot2
+##   grobWidth.absoluteGrob  ggplot2
+##   grobX.absoluteGrob      ggplot2
+##   grobY.absoluteGrob      ggplot2
+library(ggfortify)
+## Registered S3 method overwritten by &#39;ggfortify&#39;:
+##   method        from 
+##   fortify.table ggalt
+
+
+# ACP
+df &lt;- iris[c(1, 2, 3, 4)]
+pca_mod &lt;- prcomp(df)
+
+df_pc &lt;- data.frame(pca_mod$x, Species=iris$Species)  # dataframe of principal components
+df_pc_vir &lt;- df_pc[df_pc$Species == &quot;virginica&quot;, ]  # df for &#39;virginica&#39;
+df_pc_set &lt;- df_pc[df_pc$Species == &quot;setosa&quot;, ]  # df for &#39;setosa&#39;
+df_pc_ver &lt;- df_pc[df_pc$Species == &quot;versicolor&quot;, ]  # df for &#39;versicolor&#39;</code></pre>
+<pre class="r"><code>ggplot(df_pc, aes(PC1, PC2, col=Species)) + 
+    geom_point(aes(shape=Species), size=2) +   # draw points
+    labs(title=&quot;Iris Clustering&quot;, 
+         subtitle=&quot;With principal components PC1 and PC2 as X and Y axis&quot;,
+         caption=&quot;Source: Iris&quot;) + 
+    coord_cartesian(xlim = 1.2 * c(min(df_pc$PC1), max(df_pc$PC1)), 
+                    ylim = 1.2 * c(min(df_pc$PC2), max(df_pc$PC2))) +   # change axis limits
+    geom_encircle(data = df_pc_vir, aes(x=PC1, y=PC2)) +   # draw circles
+    geom_encircle(data = df_pc_set, aes(x=PC1, y=PC2)) + 
+    geom_encircle(data = df_pc_ver, aes(x=PC1, y=PC2))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="voir-aussi" class="section level2">
+<h2>Voir aussi</h2>
+<ul>
+<li><a href="http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html">La page d’origine</a></li>
+</ul>
+</div>
+</div>

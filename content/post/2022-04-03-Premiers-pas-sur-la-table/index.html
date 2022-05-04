@@ -1,0 +1,140 @@
+---
+title: "Premiers pas sur la table"
+author: "Jocelyn Béziau"
+date: 2022-04-03
+categories: ["R", "tidyverse", "formation"]
+tags: ["R", "intro"]
+---
+
+
+
+<div id="premières-observations-sur-la-table-de-données" class="section level2">
+<h2>Premières observations sur la table de données</h2>
+<div id="dans-les-fenêtres-de-rstudio" class="section level3">
+<h3>Dans les fenêtres de RStudio</h3>
+<ul>
+<li>L’objet <code>tab_naissances</code> apparaît dans le panneau en haut à droite</li>
+<li>Le bouton bleu en forme de flèche affiche la liste des variables composant cet objet</li>
+<li>Cliquer sur le nom de la table l’ouvre dans le panneau en haut à gauche (cette opération peut être chronophage selon le nombre de lignes et de colonnes de l’objet)</li>
+</ul>
+</div>
+<div id="en-ligne-de-commande" class="section level3">
+<h3>En ligne de commande</h3>
+<pre class="r"><code>ls() # liste des objets en mémoire
+str(penguins) # liste des variables composant l&#39;objet tab_naissances
+View(penguins) # affiche l&#39;objet dans le panneau en haut à gauche
+head(penguins, 5) # les 5 premières lignes de la table
+tail(penguins, 1) # la dernière ligne de la table</code></pre>
+</div>
+</div>
+<div id="enchaîner-les-fonctions-le-pipe" class="section level2">
+<h2>Enchaîner les fonctions : le pipe</h2>
+<p>Le résultat (sortie) d’une fonction peut être utilisé en argument (entrée) d’une autre fonction.
+Dans la syntaxe R de base, cet enchaînement se présente sous une forme logique mais peu lisible pour décrire l’enchaînement chronologique des opérations :</p>
+<p><code>digerer(manger(cuisiner(recette_tajine)))</code></p>
+<p>L’opérateur <code>%&gt;%</code> (pipe), introduit par le package <strong>magrittr</strong> et repris par <strong>dplyr</strong>, facilite la lecture de cet enchaînement d’opérations :</p>
+<pre class="r"><code>library(dplyr)
+recette_tajine %&gt;% 
+    cuisiner() %&gt;% # les parenthèses sont optionnelles
+    manger() %&gt;% 
+    digerer()</code></pre>
+<p>Les commandes suivantes sont équivalentes :</p>
+<pre class="r"><code>penguins %&gt;% head %&gt;% tail(1)
+penguins %&gt;% head() %&gt;% tail(1)
+
+# écriture &quot;R de base&quot;
+tail(head(penguins), 1)
+
+# écriture &quot;hybride&quot;, pour les gens à l&#39;esprit embrouillé
+tail(penguins %&gt;% head(), 1)
+head(penguins) %&gt;% tail(1)</code></pre>
+</div>
+<div id="sélectionner-des-colonnes-select" class="section level2">
+<h2>Sélectionner des colonnes : <code>select()</code></h2>
+<p>Une première syntaxe, similaire à SQL, permet de conserver une liste de colonnes de la table</p>
+<pre class="r"><code>penguins %&gt;% select(species, island, year) %&gt;% head()</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   species island     year
+##   &lt;fct&gt;   &lt;fct&gt;     &lt;int&gt;
+## 1 Adelie  Torgersen  2007
+## 2 Adelie  Torgersen  2007
+## 3 Adelie  Torgersen  2007
+## 4 Adelie  Torgersen  2007
+## 5 Adelie  Torgersen  2007
+## 6 Adelie  Torgersen  2007</code></pre>
+<p>Remarque : chaque étape de cet enchaînement crée une nouvelle table, mais à moins d’assigner celle-ci à un objet, elle n’est pas réutilisable par la suite.</p>
+</div>
+<div id="lister-les-modalités-dune-colonne-distinct" class="section level2">
+<h2>Lister les modalités d’une colonne : <code>distinct()</code></h2>
+<p>La fonction <code>distinct()</code> retourne une table sans doublons. Elle peut être utile pour récupérer l’ensemble des modalités observées pour une variable passée en argument</p>
+<pre class="r"><code># toutes les modalités prises par la variable species
+penguins %&gt;% distinct(species)</code></pre>
+<pre><code>## # A tibble: 3 × 1
+##   species  
+##   &lt;fct&gt;    
+## 1 Adelie   
+## 2 Gentoo   
+## 3 Chinstrap</code></pre>
+<p>C’est l’équivalent de l’instruction SQL :</p>
+<pre class="sql"><code>SELECT DISTINCT species FROM penguins</code></pre>
+<p>Sans argument, la fonction <code>distinct()</code> renvoie une table purgée des lignes en double</p>
+<pre class="r"><code>penguins %&gt;% distinct() %&gt;% head(5)</code></pre>
+<pre><code>## # A tibble: 5 × 8
+##   species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g sex     year
+##   &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;       &lt;int&gt; &lt;fct&gt;  &lt;int&gt;
+## 1 Adelie  Torgersen           39.1          18.7               181        3750 male    2007
+## 2 Adelie  Torgersen           39.5          17.4               186        3800 female  2007
+## 3 Adelie  Torgersen           40.3          18                 195        3250 female  2007
+## 4 Adelie  Torgersen           NA            NA                  NA          NA &lt;NA&gt;    2007
+## 5 Adelie  Torgersen           36.7          19.3               193        3450 female  2007</code></pre>
+<p>C’est l’équivalent de l’instruction SQL :</p>
+<pre class="sql"><code>SELECT DISTINCT * FROM penguins</code></pre>
+</div>
+<div id="le-point-sur-les-guillemets" class="section level2">
+<h2>Le point sur les guillemets</h2>
+<p>On ne met rien autour de notre paramètre lorsqu’on s’intéresse au <em>contenu</em> de celui-ci, à ce qui se cache derrière ce symbole (une fonction, une table, …)</p>
+<p>Lorsqu’on ne veut pas que notre paramètre soit interprété comme un objet R, il faut l’encadrer par des quotes (simples : <code>'chaîne_de_caractères'</code> ou doubles : <code>"chaîne_de_caractères"</code>)</p>
+<pre class="r"><code>import(&quot;NAIS06.sas7bdat&quot;)</code></pre>
+<pre class="r"><code>import(NAIS06.sas7bdat) </code></pre>
+<pre><code>## objet &#39;NAIS06.sas7bdat&#39; introuvable</code></pre>
+<p>Les quotes sont parfois optionnelles : par exemple, le comportement des fonctions <code>help()</code> et <code>library()</code> reste le même que l’on mette des quotes ou non</p>
+<p>Il existe par ailleurs des exceptions (évaluation non standard : NSE), où il <strong>ne faut pas</strong> mettre de quotes pour obtenir le bon résultat. Les fonctions du package <strong>dplyr</strong> en sont un bon exemple : les noms de colonnes doivent être laissés sans quotes. D’une certaine façon, <strong>dplyr</strong> considère que c’est le contenu de la colonne qui nous intéresse</p>
+</div>
+<div id="exercice" class="section level2">
+<h2>Exercice</h2>
+<ol style="list-style-type: decimal">
+<li><p>Afficher le contenu de la 11ème observation de <em>penguins</em></p></li>
+<li><p>Quel est le contenu de la variable <em>sex</em> de cette 11ème observation?</p></li>
+<li><p>Quelles sont les trois premières modalités différentes rencontrées pour la variable <em>body_mass_g</em>, les trois dernières?</p></li>
+</ol>
+</div>
+<div id="solution" class="section level2">
+<h2>Solution</h2>
+<pre class="r"><code># 1
+penguins %&gt;% head(11) %&gt;% tail(1)</code></pre>
+<pre><code>## # A tibble: 1 × 8
+##   species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g sex    year
+##   &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;       &lt;int&gt; &lt;fct&gt; &lt;int&gt;
+## 1 Adelie  Torgersen           37.8          17.1               186        3300 &lt;NA&gt;   2007</code></pre>
+<pre class="r"><code># 2
+penguins %&gt;% head(11) %&gt;% tail(1) %&gt;% select(sex)</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   sex  
+##   &lt;fct&gt;
+## 1 &lt;NA&gt;</code></pre>
+<pre class="r"><code># 3
+penguins %&gt;% distinct(body_mass_g) %&gt;% head(3)</code></pre>
+<pre><code>## # A tibble: 3 × 1
+##   body_mass_g
+##         &lt;int&gt;
+## 1        3750
+## 2        3800
+## 3        3250</code></pre>
+<pre class="r"><code>penguins %&gt;% distinct(body_mass_g) %&gt;% tail(3)</code></pre>
+<pre><code>## # A tibble: 3 × 1
+##   body_mass_g
+##         &lt;int&gt;
+## 1        3850
+## 2        2700
+## 3        3675</code></pre>
+</div>
