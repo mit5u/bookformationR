@@ -172,8 +172,8 @@ naissances2021 %>% mutate(
 		substr(csm, 1, 1) == '3' ~ "cadres",
 		substr(csm, 1, 1) == '4' ~ "professions intermédiaires",
 		substr(csm, 1, 1) == '5' ~ "employés",
-		substr(csm, 1, 1) == '6' ~ "ouvriers",                  # les modalités 1 à 6 sont recodées explicitement
-		activp            <= '2' ~ "chômeurs ou inactifs",      # pour les autres cas on regarde si 'activp' vaut 2
+		substr(csm, 1, 1) == '6' ~ "ouvriers",                  # les modalités sont recodées explicitement
+		substr(csm, 1, 1) == '9' ~ "chômeurs ou inactifs",      
 		TRUE                     ~ "indéterminé"))              # et si tout échoue...
 
 ```

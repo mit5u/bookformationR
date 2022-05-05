@@ -114,7 +114,7 @@ Les opérateurs de comparaison sont :
 * la naissance a lieu hors mariage (année de mariage *amar* = "0000")
 * le bébé est une fille (*sexe* = "2")
 
-2) Même chose pour les départements de Loire-Atlantique (44) et du Mainte-et-Loire (49)
+2) Même chose pour les départements de Loire-Atlantique (44) et du Maine-et-Loire (49)
 
 ## Solution de l'exercice
 

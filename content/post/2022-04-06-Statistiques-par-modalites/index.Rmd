@@ -34,10 +34,6 @@ Mais cela n'est possible que pour un comptage simple.
 ```{r include = TRUE, echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE}
 # tout simplement :
 tab_naissances %>% count(regnais)
-
-# ou bien :
-tab_naissances %>% 
-    summarise(nombre_naissances = n())
 ```
 
 
